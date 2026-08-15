@@ -58,25 +58,31 @@ struct CompactTabStripView: View {
     private var tabStrip: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
-                ForEach(displayedPinned) { tab in
-                    pinnedChip(for: tab)
-                        .onDrag {
-                            pinnedDragOverride = livePinned
-                            draggingPinnedID = tab.id
-                            return NSItemProvider(object: tab.id.uuidString as NSString)
+                ForEach(displayedPinned.filter { $0.id != browser.splitTabID }) { tab in
+                    Group {
+                        if let splitID = browser.splitTabID, tab.id == browser.currentTabID, let splitTab = browser.tab(withID: splitID) {
+                            SplitMergedTabRow(primary: tab, split: splitTab)
+                        } else {
+                            pinnedChip(for: tab)
                         }
-                        .onDrop(of: [UTType.text], delegate: TabChipDropDelegate(
-                            item: tab,
-                            items: Binding(
-                                get: { pinnedDragOverride ?? livePinned },
-                                set: { pinnedDragOverride = $0 }
-                            ),
-                            draggingID: $draggingPinnedID,
-                            onReorder: { newOrder in
-                                browser.reorderTabs(newOrder)
-                                pinnedDragOverride = nil
-                            }
-                        ))
+                    }
+                    .onDrag {
+                        pinnedDragOverride = livePinned
+                        draggingPinnedID = tab.id
+                        return NSItemProvider(object: tab.id.uuidString as NSString)
+                    }
+                    .onDrop(of: [UTType.text], delegate: TabChipDropDelegate(
+                        item: tab,
+                        items: Binding(
+                            get: { pinnedDragOverride ?? livePinned },
+                            set: { pinnedDragOverride = $0 }
+                        ),
+                        draggingID: $draggingPinnedID,
+                        onReorder: { newOrder in
+                            browser.reorderTabs(newOrder)
+                            pinnedDragOverride = nil
+                        }
+                    ))
                 }
 
                 if !displayedPinned.isEmpty && !displayedRegular.isEmpty {
@@ -86,25 +92,31 @@ struct CompactTabStripView: View {
                         .padding(.horizontal, 2)
                 }
 
-                ForEach(displayedRegular) { tab in
-                    regularChip(for: tab)
-                        .onDrag {
-                            regularDragOverride = liveRegular
-                            draggingRegularID = tab.id
-                            return NSItemProvider(object: tab.id.uuidString as NSString)
+                ForEach(displayedRegular.filter { $0.id != browser.splitTabID }) { tab in
+                    Group {
+                        if let splitID = browser.splitTabID, tab.id == browser.currentTabID, let splitTab = browser.tab(withID: splitID) {
+                            SplitMergedTabRow(primary: tab, split: splitTab)
+                        } else {
+                            regularChip(for: tab)
                         }
-                        .onDrop(of: [UTType.text], delegate: TabChipDropDelegate(
-                            item: tab,
-                            items: Binding(
-                                get: { regularDragOverride ?? liveRegular },
-                                set: { regularDragOverride = $0 }
-                            ),
-                            draggingID: $draggingRegularID,
-                            onReorder: { newOrder in
-                                browser.reorderTabs(newOrder)
-                                regularDragOverride = nil
-                            }
-                        ))
+                    }
+                    .onDrag {
+                        regularDragOverride = liveRegular
+                        draggingRegularID = tab.id
+                        return NSItemProvider(object: tab.id.uuidString as NSString)
+                    }
+                    .onDrop(of: [UTType.text], delegate: TabChipDropDelegate(
+                        item: tab,
+                        items: Binding(
+                            get: { regularDragOverride ?? liveRegular },
+                            set: { regularDragOverride = $0 }
+                        ),
+                        draggingID: $draggingRegularID,
+                        onReorder: { newOrder in
+                            browser.reorderTabs(newOrder)
+                            regularDragOverride = nil
+                        }
+                    ))
                 }
 
                 Button { browser.createTab() } label: {
@@ -183,6 +195,9 @@ struct CompactTabStripView: View {
                 Text(tab.title.isEmpty ? "New Tab" : tab.title)
                     .font(.caption2)
                     .lineLimit(1)
+                if let controller = browser.webControllers[tab.id] {
+                    AudioIndicatorBadge(controller: controller, diameter: 15)
+                }
                 // Matches TabRowView in the full sidebar: only the tab
                 // you're currently on gets an always-visible close button.
                 if isActive {

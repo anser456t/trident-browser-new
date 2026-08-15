@@ -37,6 +37,9 @@ struct TabRowView: View {
                         .font(.caption2)
                         .foregroundStyle(.white.opacity(0.4))
                 }
+                if let controller = browser.webControllers[tab.id] {
+                    AudioIndicatorBadge(controller: controller, diameter: 16)
+                }
                 // Only the tab you're currently on shows an always-visible
                 // close button — everything else stays clean and relies on
                 // the existing swipe/long-press-to-close, exactly as before.

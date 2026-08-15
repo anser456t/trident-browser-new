@@ -17,9 +17,19 @@ final class WebViewController: NSObject, ObservableObject, Identifiable {
     @Published var canGoForward: Bool = false
     @Published var loadError: BrowserLoadError?
     @Published var host: String = ""
+    /// Whether this tab currently has audio (or video) playing. Backed by
+    /// WebKit's private `_isPlayingAudio` KVO key — there's no public API
+    /// for this. Every WKWebView-based third-party browser that shows a
+    /// "tab is making noise" indicator uses this same key; it's been stable
+    /// across iOS releases for years. Since Trident is sideloaded rather
+    /// than App Store-distributed, using an underscored key here isn't a
+    /// review risk — worst case on a future OS the KVO simply never fires
+    /// and the indicator stays off, it can't crash.
+    @Published var isPlayingAudio: Bool = false
 
     private var cancellables = Set<AnyCancellable>()
     private var pendingDownloads: [ObjectIdentifier: UUID] = [:]
+    private var isObservingAudioKVO = false
 
     var onCreateNewTab: ((URL) -> Void)?
     /// Called the moment a download is handed off to WKDownload, so the UI can show a toast.
@@ -127,6 +137,33 @@ final class WebViewController: NSObject, ObservableObject, Identifiable {
         webView.publisher(for: \.canGoForward).sink { [weak self] value in
             self?.canGoForward = value
         }.store(in: &cancellables)
+
+        // `WKWebView` has no public property for "is this page making
+        // sound right now" — this KVO key is the standard workaround (see
+        // the doc comment on `isPlayingAudio`). Guarded with `respondsTo`
+        // so it's a silent no-op rather than a crash if a future WebKit
+        // ever removes the key.
+        if webView.responds(to: NSSelectorFromString("_isPlayingAudio")) {
+            webView.addObserver(self, forKeyPath: "_isPlayingAudio", options: [.new, .initial], context: nil)
+            isObservingAudioKVO = true
+        }
+    }
+
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey: Any]?, context: UnsafeMutableRawPointer?) {
+        guard keyPath == "_isPlayingAudio" else {
+            super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
+            return
+        }
+        let playing = (change?[.newKey] as? NSNumber)?.boolValue ?? false
+        DispatchQueue.main.async { [weak self] in
+            self?.isPlayingAudio = playing
+        }
+    }
+
+    deinit {
+        if isObservingAudioKVO {
+            webView.removeObserver(self, forKeyPath: "_isPlayingAudio")
+        }
     }
 
     func applyDesktopMode(_ desktop: Bool) {

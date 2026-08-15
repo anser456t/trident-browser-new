@@ -90,8 +90,10 @@ struct SidebarView: View {
                     }
                 }
 
+                sectionHeader("Quick Access")
                 quickAccessTiles
 
+                sectionHeader("Spaces")
                 SpaceSwitcherView()
 
                 if let spaceID = browser.currentSpaceID {
@@ -101,14 +103,14 @@ struct SidebarView: View {
                             if !pinned.isEmpty {
                                 sectionHeader("Pinned")
                                 VStack(spacing: 2) {
-                                    ForEach(pinned) { TabRowView(tab: $0) }
+                                    tabRows(for: pinned)
                                 }
                             }
 
                             let regular = browser.regularTabs(for: spaceID)
                             sectionHeader("Tabs (\(regular.count))")
                             VStack(spacing: 2) {
-                                ForEach(regular) { TabRowView(tab: $0) }
+                                tabRows(for: regular)
                             }
 
                             let archived = browser.archivedTabs(for: spaceID)
@@ -197,6 +199,22 @@ struct SidebarView: View {
             .font(.system(size: 10, weight: .bold))
             .foregroundStyle(.white.opacity(0.35))
             .padding(.horizontal, 6)
+    }
+
+    /// Renders one row per tab — except while Split View is active, when the
+    /// primary tab and its split partner merge into a single
+    /// `SplitMergedTabRow` (wherever the primary tab happens to sit; pinned
+    /// or regular) and the partner's own separate row is skipped so it
+    /// doesn't also show up on its own elsewhere in the list.
+    @ViewBuilder
+    private func tabRows(for tabs: [BrowserTab]) -> some View {
+        ForEach(tabs.filter { $0.id != browser.splitTabID }) { tab in
+            if let splitID = browser.splitTabID, tab.id == browser.currentTabID, let splitTab = browser.tab(withID: splitID) {
+                SplitMergedTabRow(primary: tab, split: splitTab)
+            } else {
+                TabRowView(tab: tab)
+            }
+        }
     }
 
     /// When `label` is nil, renders as an icon-only chip. `ViewThatFits`
