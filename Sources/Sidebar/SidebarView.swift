@@ -75,16 +75,16 @@ struct SidebarView: View {
                     }
                 }
 
-                SpaceSwitcherView()
-
                 quickAccessTiles
+
+                SpaceSwitcherView()
 
                 if let spaceID = browser.currentSpaceID {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 14) {
                             let pinned = browser.pinnedTabs(for: spaceID)
                             if !pinned.isEmpty {
-                                sectionHeader("Favorites")
+                                sectionHeader("Pinned")
                                 VStack(spacing: 2) {
                                     ForEach(pinned) { TabRowView(tab: $0) }
                                 }
@@ -145,30 +145,29 @@ struct SidebarView: View {
     /// one always opens a brand-new tab at that link rather than switching to
     /// an existing tab. Backed by the same `BookmarkItem` table Quick Access
     /// on the Start page uses, so tiles added from either place show up in both.
+    /// A wrapping grid rather than a horizontal scroller, so a narrow sidebar
+    /// never clips tiles off-screen — they flow onto additional rows instead.
     private var quickAccessTiles: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 10) {
-                ForEach(bookmarkItems.prefix(10)) { bookmark in
-                    Button {
-                        browser.createTab()
-                        browser.navigate(to: bookmark.urlString)
-                    } label: {
-                        FaviconView(host: bookmark.url?.host ?? "", size: 18)
-                            .frame(width: 34, height: 34)
-                            .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(Color.white.opacity(0.07)))
-                    }
-                    .buttonStyle(PressFeedbackButtonStyle())
-                }
-                Button { showingAddQuickTile = true } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.5))
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 34, maximum: 34), spacing: 10)], alignment: .leading, spacing: 10) {
+            ForEach(bookmarkItems.prefix(16)) { bookmark in
+                Button {
+                    browser.createTab()
+                    browser.navigate(to: bookmark.urlString)
+                } label: {
+                    FaviconView(host: bookmark.url?.host ?? "", size: 18)
                         .frame(width: 34, height: 34)
-                        .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(Color.white.opacity(0.04)))
+                        .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(Color.white.opacity(0.07)))
                 }
                 .buttonStyle(PressFeedbackButtonStyle())
             }
-            .padding(.horizontal, 2)
+            Button { showingAddQuickTile = true } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.5))
+                    .frame(width: 34, height: 34)
+                    .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(Color.white.opacity(0.04)))
+            }
+            .buttonStyle(PressFeedbackButtonStyle())
         }
     }
 

@@ -30,6 +30,31 @@ struct HomeScreenSettingsView: View {
                     Slider(value: $settings.homeCardBlur, in: 0...40)
                 }
             }
+
+            settingsGroup("Background") {
+                Text("A tint layer just for the Start page's own background — separate from the app-wide wallpaper in Appearance settings.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 8), spacing: 10) {
+                    ForEach(AccentPreset.allCases) { preset in
+                        Circle()
+                            .fill(preset.color)
+                            .frame(width: 26, height: 26)
+                            .overlay(
+                                Circle().stroke(Color.primary, lineWidth: settings.homeBackgroundColorHex == preset.hex ? 2 : 0)
+                            )
+                            .onTapGesture { settings.homeBackgroundColorHex = preset.hex }
+                    }
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Tint Opacity").foregroundStyle(.secondary)
+                    Slider(value: $settings.homeBackgroundOpacity, in: 0...0.6)
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Blur").foregroundStyle(.secondary)
+                    Slider(value: $settings.homeBackgroundBlur, in: 0...40)
+                }
+            }
         }
     }
 

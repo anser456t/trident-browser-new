@@ -30,6 +30,22 @@ struct ContentView: View {
 
                 mainLayout(safeAreaInsets: geo.safeAreaInsets)
 
+                // In true full screen the web content area deliberately runs
+                // edge-to-edge, including up under the status bar — which
+                // meant the page showed straight through behind the
+                // clock/battery/wifi icons. When the user hasn't opted to
+                // hide the status bar outright (see `.statusBar(hidden:)`
+                // below), this draws a solid strip behind just that icon row
+                // instead, so nothing peeks through underneath them.
+                if browser.isFullScreenActive && !settings.hideStatusBarInFullScreen && geo.safeAreaInsets.top > 0 {
+                    Color.black.opacity(0.001)
+                        .background(.ultraThinMaterial)
+                        .frame(height: geo.safeAreaInsets.top)
+                        .frame(maxWidth: .infinity, alignment: .top)
+                        .ignoresSafeArea(edges: .top)
+                        .transition(.opacity)
+                }
+
                 if browser.isFullScreenActive {
                     Button {
                         browser.isFullScreenActive = false
@@ -69,6 +85,7 @@ struct ContentView: View {
             // adds the safe-area padding back in by hand via `geo.safeAreaInsets`
             // so content still avoids the notch / home indicator / rounded corners.
             .ignoresSafeArea()
+            .statusBar(hidden: browser.isFullScreenActive && settings.hideStatusBarInFullScreen)
             .animation(.spring(response: 0.35, dampingFraction: 0.85), value: browser.toastMessage)
             .animation(.spring(response: 0.35, dampingFraction: 0.85), value: browser.isFullScreenActive)
             .animation(.spring(response: 0.35, dampingFraction: 0.85), value: browser.isSidebarVisible)
@@ -131,10 +148,14 @@ struct ContentView: View {
                 // remains available as an explicit user-controlled "shrink
                 // the sidebar" slider, but it's no longer treated as an
                 // artificial minimum margin when it's 0.
+                // Bottom is no longer padded by the safe area at all — only
+                // the user's own "Sidebar Height Margin" slider adds space
+                // there now, so at its default of 0 the sidebar runs flush
+                // to the physical bottom edge, matching the reference layout.
                 SidebarView()
                     .padding(.leading, safeAreaInsets.leading)
                     .padding(.top, safeAreaInsets.top + settings.sidebarVerticalInset)
-                    .padding(.bottom, safeAreaInsets.bottom + settings.sidebarVerticalInset)
+                    .padding(.bottom, settings.sidebarVerticalInset)
                     .frame(maxHeight: .infinity)
                     .transition(.move(edge: .leading).combined(with: .opacity))
 
@@ -156,7 +177,7 @@ struct ContentView: View {
             .padding(.leading, !showsChrome ? 0 : (sidebarShouldShow ? 0 : safeAreaInsets.leading))
             .padding(.trailing, !showsChrome ? 0 : safeAreaInsets.trailing)
             .padding(.top, !showsChrome ? 0 : safeAreaInsets.top)
-            .padding(.bottom, !showsChrome ? 0 : safeAreaInsets.bottom)
+            .padding(.bottom, !showsChrome ? 0 : settings.sidebarVerticalInset)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -213,13 +234,15 @@ private struct SidebarResizeHandle: View {
         // (usually much taller) sidebar, so most of the edge wasn't
         // draggable at all. This version makes the *entire* height of the
         // sidebar edge grabbable — the capsule is still what's drawn, but the
-        // hit area behind it spans top to bottom.
+        // hit area behind it spans top to bottom. Its width is now driven by
+        // `settings.sidebarContentGap`, so the visible gap between the
+        // sidebar and the page is user-adjustable instead of a fixed value.
         ZStack {
             Capsule()
                 .fill(Color.white.opacity(isDragging ? 0.3 : 0.14))
                 .frame(width: 3, height: 44)
         }
-        .frame(width: 5)
+        .frame(width: max(5, settings.sidebarContentGap))
         .frame(maxHeight: .infinity)
         .contentShape(Rectangle())
         .gesture(

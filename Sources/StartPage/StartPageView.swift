@@ -44,9 +44,27 @@ struct StartPageView: View {
             .padding(.top, 28)
             .frame(maxWidth: .infinity)
         }
+        .background(homeBackgroundLayer)
         .sheet(isPresented: $showingAddQuickAccess) {
             AddQuickAccessSheet(nextSortOrder: (bookmarks.map(\.sortOrder).max() ?? -1) + 1)
         }
+    }
+
+    /// The Home-specific "Background" personalization (Settings ▸ Home
+    /// Screen ▸ Background) — a tint + blur layer behind the Start page's
+    /// own content only, independent of the app-wide wallpaper.
+    private var homeBackgroundLayer: some View {
+        ZStack {
+            if settings.homeBackgroundOpacity > 0.001 {
+                Color(hex: settings.homeBackgroundColorHex).opacity(settings.homeBackgroundOpacity)
+            }
+            if settings.homeBackgroundBlur > 0.001 {
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                    .opacity(min(settings.homeBackgroundBlur / 40.0, 1.0))
+            }
+        }
+        .ignoresSafeArea()
     }
 
     private var searchField: some View {

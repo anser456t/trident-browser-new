@@ -104,6 +104,12 @@ final class AppSettings: ObservableObject {
     @Published var homeCardTransparency: Double { didSet { save(homeCardTransparency, "homeCardTransparency") } }
     /// Background blur radius (points) behind Start page cards.
     @Published var homeCardBlur: Double { didSet { save(homeCardBlur, "homeCardBlur") } }
+    /// Distinct from the app-wide wallpaper in Appearance settings — this is
+    /// a tint layer drawn only behind the Start page's own content, so "Home"
+    /// personalization can change something beyond just the widget cards.
+    @Published var homeBackgroundColorHex: String { didSet { save(homeBackgroundColorHex, "homeBackgroundColorHex") } }
+    @Published var homeBackgroundOpacity: Double { didSet { save(homeBackgroundOpacity, "homeBackgroundOpacity") } }
+    @Published var homeBackgroundBlur: Double { didSet { save(homeBackgroundBlur, "homeBackgroundBlur") } }
 
     // Appearance
     @Published var colorSchemePreference: ColorSchemePreference { didSet { save(colorSchemePreference.rawValue, "colorSchemePreference") } }
@@ -126,13 +132,21 @@ final class AppSettings: ObservableObject {
     @Published var sidebarCornerRadius: Double { didSet { save(sidebarCornerRadius, "sidebarCornerRadius") } }
     @Published var sidebarCompactMode: Bool { didSet { save(sidebarCompactMode, "sidebarCompactMode") } }
     @Published var sidebarShowFavicons: Bool { didSet { save(sidebarShowFavicons, "sidebarShowFavicons") } }
-    @Published var sidebarShowSpaceNames: Bool { didSet { save(sidebarShowSpaceNames, "sidebarShowSpaceNames") } }
     @Published var sidebarAlwaysShow: Bool { didSet { save(sidebarAlwaysShow, "sidebarAlwaysShow") } }
     @Published var sidebarAutoHide: Bool { didSet { save(sidebarAutoHide, "sidebarAutoHide") } }
+    /// When entering true full-screen (immersive) mode: if true, the status
+    /// bar (clock/battery/wifi) is hidden outright; if false, a solid bar is
+    /// drawn behind it so the web page can't show through underneath it.
+    @Published var hideStatusBarInFullScreen: Bool { didSet { save(hideStatusBarInFullScreen, "hideStatusBarInFullScreen") } }
     /// Vertical margin between the sidebar panel and the top/bottom of the window.
     /// Smaller values make the sidebar taller; larger values shrink it. This is how
     /// users adjust sidebar "height" without breaking the full-bleed layout.
     @Published var sidebarVerticalInset: Double { didSet { save(sidebarVerticalInset, "sidebarVerticalInset") } }
+    /// Horizontal gap between the sidebar and the web content column,
+    /// controlled by the resize-handle's hit width. Small by default to
+    /// match a full-bleed layout, but adjustable since a very thin gap can
+    /// be hard to grab/see.
+    @Published var sidebarContentGap: Double { didSet { save(sidebarContentGap, "sidebarContentGap") } }
 
     // Tabs
     @Published var archiveInterval: ArchiveInterval { didSet { save(archiveInterval.rawValue, "archiveInterval") } }
@@ -167,6 +181,9 @@ final class AppSettings: ObservableObject {
         homeCardCornerRadius = d.object(forKey: "homeCardCornerRadius") as? Double ?? 14
         homeCardTransparency = d.object(forKey: "homeCardTransparency") as? Double ?? 0.06
         homeCardBlur = d.object(forKey: "homeCardBlur") as? Double ?? 20
+        homeBackgroundColorHex = d.string(forKey: "homeBackgroundColorHex") ?? AccentPreset.lavender.hex
+        homeBackgroundOpacity = d.object(forKey: "homeBackgroundOpacity") as? Double ?? 0.0
+        homeBackgroundBlur = d.object(forKey: "homeBackgroundBlur") as? Double ?? 0
 
         colorSchemePreference = ColorSchemePreference(rawValue: d.string(forKey: "colorSchemePreference") ?? "") ?? .dark
         accentColorHex = d.string(forKey: "accentColorHex") ?? AccentPreset.lavender.hex
@@ -187,10 +204,11 @@ final class AppSettings: ObservableObject {
         sidebarCornerRadius = d.object(forKey: "sidebarCornerRadius") as? Double ?? 16
         sidebarCompactMode = d.object(forKey: "sidebarCompactMode") as? Bool ?? false
         sidebarShowFavicons = d.object(forKey: "sidebarShowFavicons") as? Bool ?? true
-        sidebarShowSpaceNames = d.object(forKey: "sidebarShowSpaceNames") as? Bool ?? true
         sidebarAlwaysShow = d.object(forKey: "sidebarAlwaysShow") as? Bool ?? true
         sidebarAutoHide = d.object(forKey: "sidebarAutoHide") as? Bool ?? false
+        hideStatusBarInFullScreen = d.object(forKey: "hideStatusBarInFullScreen") as? Bool ?? false
         sidebarVerticalInset = d.object(forKey: "sidebarVerticalInset") as? Double ?? 0
+        sidebarContentGap = d.object(forKey: "sidebarContentGap") as? Double ?? 5
 
         archiveInterval = ArchiveInterval(rawValue: d.string(forKey: "archiveInterval") ?? "") ?? .sevenDays
         lastActiveSpaceIDString = d.string(forKey: "lastActiveSpaceID")
