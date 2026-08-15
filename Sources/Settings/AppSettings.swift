@@ -96,7 +96,6 @@ final class AppSettings: ObservableObject {
     @Published var openNewTabsAdjacent: Bool { didSet { save(openNewTabsAdjacent, "openNewTabsAdjacent") } }
     /// Whether the Start page's search field is pinned above the widgets
     /// (top) or sits in its normal position below them.
-    @Published var searchBarAtTop: Bool { didSet { save(searchBarAtTop, "searchBarAtTop") } }
     /// Corner radius applied to Quick Access / widget cards on the Start page.
     @Published var homeCardCornerRadius: Double { didSet { save(homeCardCornerRadius, "homeCardCornerRadius") } }
     /// Opacity of the frosted-glass fill behind Start page cards (0 = fully
@@ -182,7 +181,6 @@ final class AppSettings: ObservableObject {
         defaultWebsiteMode = WebsiteMode(rawValue: d.string(forKey: "defaultWebsiteMode") ?? "") ?? .desktop
         startPageStyle = StartPageStyle(rawValue: d.string(forKey: "startPageStyle") ?? "") ?? .dashboard
         openNewTabsAdjacent = d.object(forKey: "openNewTabsAdjacent") as? Bool ?? true
-        searchBarAtTop = d.object(forKey: "searchBarAtTop") as? Bool ?? false
         homeCardCornerRadius = d.object(forKey: "homeCardCornerRadius") as? Double ?? 14
         homeCardTransparency = d.object(forKey: "homeCardTransparency") as? Double ?? 0.06
         homeCardBlur = d.object(forKey: "homeCardBlur") as? Double ?? 20

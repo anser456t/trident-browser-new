@@ -1,46 +1,14 @@
 import SwiftUI
 import UIKit
 
-/// The "Good afternoon" header plus the three-card widget row shown at the
-/// top of the Start page: live weather, in-app Screen Time, and a clock.
-struct HomeWidgetsView: View {
+/// The "Good afternoon" header shown at the top of the Start page. Split out
+/// from the widget row below so the two can be reordered independently.
+struct HomeGreetingHeader: View {
     @EnvironmentObject var settings: AppSettings
-    @StateObject private var weather = WeatherService()
-    @StateObject private var usage = AppUsageTracker.shared
     @State private var isEditingName = false
     @State private var nameDraft = ""
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            header
-
-            ViewThatFits(in: .horizontal) {
-                HStack(alignment: .top, spacing: 12) {
-                    WeatherWidgetCard(weather: weather)
-                    ScreenTimeWidgetCard(usage: usage)
-                    ClockWidgetCard()
-                }
-                VStack(spacing: 12) {
-                    WeatherWidgetCard(weather: weather)
-                    HStack(spacing: 12) {
-                        ScreenTimeWidgetCard(usage: usage)
-                        ClockWidgetCard()
-                    }
-                }
-            }
-        }
-        .onAppear { weather.refresh() }
-        .alert("Your Name", isPresented: $isEditingName) {
-            TextField("Name", text: $nameDraft)
-            Button("Cancel", role: .cancel) {}
-            Button("Save") {
-                let trimmed = nameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
-                settings.userDisplayName = trimmed.isEmpty ? "there" : trimmed
-            }
-        }
-    }
-
-    private var header: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(greeting + ",")
@@ -63,11 +31,46 @@ struct HomeWidgetsView: View {
             }
             .buttonStyle(.plain)
         }
+        .alert("Your Name", isPresented: $isEditingName) {
+            TextField("Name", text: $nameDraft)
+            Button("Cancel", role: .cancel) {}
+            Button("Save") {
+                let trimmed = nameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+                settings.userDisplayName = trimmed.isEmpty ? "there" : trimmed
+            }
+        }
     }
 
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: .now)
         return hour < 12 ? "Good morning" : (hour < 18 ? "Good afternoon" : "Good evening")
+    }
+}
+
+/// The three-card widget row shown on the Start page: live weather, in-app
+/// Screen Time, and a clock. (Previously bundled with the greeting header in
+/// a single `HomeWidgetsView` — split apart so `StartPageView` can place the
+/// greeting, search bar, Quick Access, and this row in any order.)
+struct HomeWidgetsRow: View {
+    @StateObject private var weather = WeatherService()
+    @StateObject private var usage = AppUsageTracker.shared
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .top, spacing: 12) {
+                WeatherWidgetCard(weather: weather)
+                ScreenTimeWidgetCard(usage: usage)
+                ClockWidgetCard()
+            }
+            VStack(spacing: 12) {
+                WeatherWidgetCard(weather: weather)
+                HStack(spacing: 12) {
+                    ScreenTimeWidgetCard(usage: usage)
+                    ClockWidgetCard()
+                }
+            }
+        }
+        .onAppear { weather.refresh() }
     }
 }
 

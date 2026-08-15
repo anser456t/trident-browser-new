@@ -5,6 +5,7 @@ import UIKit
 struct SidebarView: View {
     @EnvironmentObject var browser: BrowserViewModel
     @EnvironmentObject var settings: AppSettings
+    @Environment(\.modelContext) private var modelContext
     @Query(sort: \BookmarkItem.sortOrder) private var bookmarkItems: [BookmarkItem]
 
     @State private var showingSettings = false
@@ -173,6 +174,12 @@ struct SidebarView: View {
                         .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(Color.white.opacity(0.07)))
                 }
                 .buttonStyle(PressFeedbackButtonStyle())
+                .contextMenu {
+                    Button("Remove", systemImage: "trash", role: .destructive) {
+                        modelContext.delete(bookmark)
+                        try? modelContext.save()
+                    }
+                }
             }
             Button { showingAddQuickTile = true } label: {
                 Image(systemName: "plus")

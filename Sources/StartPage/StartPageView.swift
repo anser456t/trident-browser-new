@@ -12,23 +12,22 @@ struct StartPageView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                if settings.searchBarAtTop {
-                    searchField
-                        .frame(maxWidth: 560)
-                }
-
-                HomeWidgetsView()
+                // Order matches the layout Anser laid out by hand: greeting,
+                // then search, then Quick Access, then the weather/screen
+                // time/clock row.
+                HomeGreetingHeader()
                     .frame(maxWidth: 900)
 
-                if !settings.searchBarAtTop {
-                    searchField
-                        .frame(maxWidth: 560)
-                }
+                searchField
+                    .frame(maxWidth: 560)
 
                 if settings.startPageStyle != .minimal {
                     quickAccessRow
                         .frame(maxWidth: 900)
                 }
+
+                HomeWidgetsRow()
+                    .frame(maxWidth: 900)
 
                 if settings.startPageStyle == .dashboard {
                     HStack(alignment: .top, spacing: 20) {

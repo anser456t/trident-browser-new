@@ -13,7 +13,6 @@ struct HomeScreenSettingsView: View {
                         Text(style.displayName).tag(style)
                     }
                 }
-                Toggle("Search Bar at Top", isOn: $settings.searchBarAtTop)
             }
 
             settingsGroup("Card Appearance") {
