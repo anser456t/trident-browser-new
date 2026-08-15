@@ -14,7 +14,21 @@ struct SidebarView: View {
     @State private var showingAddQuickTile = false
 
     var body: some View {
-        GlassPanel(cornerRadius: settings.sidebarCornerRadius, tintOpacity: settings.sidebarTransparency, blurAmount: settings.sidebarBlur) {
+        // Only the trailing corners (facing the web content) round off — the
+        // sidebar's leading/top/bottom edges sit flush against the physical
+        // screen edge now, so rounding them would just clip into empty space.
+        // `ContentView.webContentArea` rounds its own leading corners by this
+        // same `settings.sidebarCornerRadius` value, so the seam between the
+        // two panels always lines up, and the corner-radius slider visibly
+        // moves both sides together instead of only affecting the sidebar.
+        GlassPanel(
+            cornerRadii: RectangleCornerRadii(
+                topLeading: 0, bottomLeading: 0,
+                bottomTrailing: settings.sidebarCornerRadius, topTrailing: settings.sidebarCornerRadius
+            ),
+            tintOpacity: settings.sidebarTransparency,
+            blurAmount: settings.sidebarBlur
+        ) {
             VStack(alignment: .leading, spacing: 12) {
                 // Nav controls (back/forward/reload, fullscreen) live on the
                 // same row as the sidebar-hide control, docked to it — this

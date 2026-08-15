@@ -89,7 +89,7 @@ struct AboutTridentView: View {
                     .foregroundStyle(.white)
             }
             Text("Trident").font(.title.bold())
-            Text("An original, Arc-inspired browser built for iPad with a Liquid Glass interface. Version 1.0.")
+            Text("A browser for iPad with a Liquid Glass interface. Version 1.0.")
                 .foregroundStyle(.secondary)
         }
     }

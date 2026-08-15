@@ -73,8 +73,14 @@ struct PressFeedbackButtonStyle: ButtonStyle {
 }
 
 /// Reusable "Liquid Glass" style surface: blur + translucent material + soft border + shadow.
+/// Supports either a uniform `cornerRadius` on all four corners, or (via
+/// `cornerRadii`) different radii per corner — used by the sidebar/content
+/// split so the edge touching the physical screen border can stay square
+/// while the edge facing the other panel rounds off, and the two panels'
+/// facing corners can be driven by the same value so they visually match.
 struct GlassPanel<Content: View>: View {
     var cornerRadius: CGFloat = 18
+    var cornerRadii: RectangleCornerRadii? = nil
     var tintOpacity: Double = 0.55
     /// When provided (0...40, matching `AppSettings.sidebarBlur`'s slider range),
     /// drives a `VariableBlurView` instead of the fixed `.ultraThinMaterial`, so
@@ -83,21 +89,32 @@ struct GlassPanel<Content: View>: View {
     @EnvironmentObject private var settings: AppSettings
     @ViewBuilder var content: () -> Content
 
+    private var shape: UnevenRoundedRectangle {
+        if let cornerRadii {
+            return UnevenRoundedRectangle(cornerRadii: cornerRadii, style: .continuous)
+        }
+        return UnevenRoundedRectangle(cornerRadii: RectangleCornerRadii(
+            topLeading: cornerRadius, bottomLeading: cornerRadius,
+            bottomTrailing: cornerRadius, topTrailing: cornerRadius
+        ), style: .continuous)
+    }
+
     var body: some View {
         content()
             .background(
                 ZStack {
                     if let blurAmount {
-                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        shape
                             .fill(Color.black.opacity(0.001)) // keeps hit-testing/clip stable while empty
                         VariableBlurView(intensity: blurAmount / 40.0)
+                            .clipShape(shape)
                             .opacity(tintOpacity + 0.3)
                     } else {
-                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        shape
                             .fill(.ultraThinMaterial)
                             .opacity(tintOpacity)
                     }
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    shape
                         .fill(
                             LinearGradient(
                                 colors: [Color.white.opacity(0.10), Color.white.opacity(0.02)],
@@ -107,10 +124,10 @@ struct GlassPanel<Content: View>: View {
                 }
             )
             .overlay(
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                shape
                     .strokeBorder(Color.white.opacity(0.14), lineWidth: 1)
             )
-            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .clipShape(shape)
             .shadow(color: .black.opacity(0.35), radius: 24, x: 0, y: 10)
     }
 }

@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// A single row in the sidebar's tab list: favicon, title, loading indicator,
-/// and a full Arc-style context menu.
+/// and a full context menu of tab actions.
 struct TabRowView: View {
     @EnvironmentObject var browser: BrowserViewModel
     @EnvironmentObject var settings: AppSettings
@@ -80,6 +80,15 @@ struct TabRowView: View {
         }
         Button("Duplicate Tab", systemImage: "plus.square.on.square") {
             browser.duplicateTab(tab)
+        }
+        if !isActive {
+            Button("Split View", systemImage: "rectangle.split.2x1") {
+                browser.openInSplit(tab)
+            }
+        } else if browser.splitTabID != nil {
+            Button("Close Split View", systemImage: "rectangle.split.2x1", role: .destructive) {
+                browser.closeSplit()
+            }
         }
         Menu("Move to Space", systemImage: "arrow.right.square") {
             ForEach(browser.spaces.filter { $0.id != tab.spaceID }) { space in

@@ -20,6 +20,19 @@ struct AppearanceSettingsView: View {
                 .pickerStyle(.segmented)
             }
 
+            settingsGroup("Theme Presets") {
+                Text("One tap sets the accent color, background, and glass tint together. You can still fine-tune anything below afterward.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 84), spacing: 12)], spacing: 12) {
+                    ForEach(ThemePreset.all) { preset in
+                        ThemePresetSwatch(preset: preset, isSelected: settings.lastAppliedThemePresetID == preset.id) {
+                            preset.apply(to: settings)
+                        }
+                    }
+                }
+            }
+
             settingsGroup("Accent Color") {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 8), spacing: 12) {
                     ForEach(AccentPreset.allCases) { preset in
@@ -184,6 +197,78 @@ private func saveBackgroundImage(_ data: Data) -> String? {
         return url.path
     } catch {
         return nil
+    }
+}
+
+/// A one-tap combination of accent color + background + glass tint, so
+/// changing the whole look doesn't mean visiting five different sliders.
+/// Applying a preset still just writes plain `AppSettings` values — nothing
+/// here is a distinct "mode", so every other control keeps working exactly
+/// as before and can be nudged afterward without losing anything.
+struct ThemePreset: Identifiable {
+    let id: String
+    let name: String
+    let accentHex: String
+    let gradientStartHex: String
+    let gradientEndHex: String
+    let angle: Double
+    let sidebarTransparency: Double
+    let sidebarBlur: Double
+
+    var swatchGradient: LinearGradient {
+        LinearGradient(colors: [Color(hex: gradientStartHex), Color(hex: gradientEndHex)], startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+
+    func apply(to settings: AppSettings) {
+        settings.accentColorHex = accentHex
+        settings.backgroundStyle = .gradient
+        settings.gradientStartHex = gradientStartHex
+        settings.gradientEndHex = gradientEndHex
+        settings.gradientAngleDegrees = angle
+        settings.gradientIntensity = 0.6
+        settings.sidebarTransparency = sidebarTransparency
+        settings.sidebarBlur = sidebarBlur
+        settings.lastAppliedThemePresetID = id
+    }
+
+    static let all: [ThemePreset] = [
+        ThemePreset(id: "midnight", name: "Midnight", accentHex: "#A78BFA", gradientStartHex: "#1E1B4B", gradientEndHex: "#0F0A24", angle: 135, sidebarTransparency: 0.55, sidebarBlur: 24),
+        ThemePreset(id: "sunset", name: "Sunset", accentHex: "#FB923C", gradientStartHex: "#7C2D12", gradientEndHex: "#831843", angle: 140, sidebarTransparency: 0.5, sidebarBlur: 22),
+        ThemePreset(id: "ocean", name: "Ocean", accentHex: "#38BDF8", gradientStartHex: "#0C4A6E", gradientEndHex: "#082F49", angle: 130, sidebarTransparency: 0.55, sidebarBlur: 26),
+        ThemePreset(id: "forest", name: "Forest", accentHex: "#4ADE80", gradientStartHex: "#052E16", gradientEndHex: "#14532D", angle: 145, sidebarTransparency: 0.55, sidebarBlur: 24),
+        ThemePreset(id: "rose", name: "Rose", accentHex: "#F472B6", gradientStartHex: "#500724", gradientEndHex: "#831843", angle: 135, sidebarTransparency: 0.5, sidebarBlur: 22),
+        ThemePreset(id: "mono", name: "Mono", accentHex: "#E5E7EB", gradientStartHex: "#111827", gradientEndHex: "#000000", angle: 135, sidebarTransparency: 0.6, sidebarBlur: 20),
+        ThemePreset(id: "cyber", name: "Cyber", accentHex: "#39FF14", gradientStartHex: "#0A0A0A", gradientEndHex: "#062E1F", angle: 120, sidebarTransparency: 0.45, sidebarBlur: 18),
+        ThemePreset(id: "sand", name: "Sand", accentHex: "#D6A15C", gradientStartHex: "#3A2E22", gradientEndHex: "#1C1712", angle: 140, sidebarTransparency: 0.55, sidebarBlur: 24)
+    ]
+}
+
+private struct ThemePresetSwatch: View {
+    let preset: ThemePreset
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(preset.swatchGradient)
+                        .frame(height: 48)
+                    Circle()
+                        .fill(Color(hex: preset.accentHex))
+                        .frame(width: 12, height: 12)
+                }
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(Color.primary, lineWidth: isSelected ? 2 : 0)
+                )
+                Text(preset.name)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .buttonStyle(PressFeedbackButtonStyle())
     }
 }
 

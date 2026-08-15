@@ -184,19 +184,70 @@ struct ContentView: View {
 
     @ViewBuilder
     private var webContentArea: some View {
-        // Rounded corners look right in the normal windowed layout, but in
-        // full-screen mode they read as leftover empty triangles of
-        // background peeking through at the edges/corners — full screen
-        // should be a true edge-to-edge rectangle, so the radius drops to 0
-        // there instead of staying a fixed 20.
-        let cornerRadius: CGFloat = browser.isFullScreenActive ? 0 : 20
+        // Full-bleed on every edge that's actually flush against the screen
+        // border — rounding those just clips into empty space. The only
+        // corner that rounds is the one facing the sidebar (when it's
+        // showing), and it's driven by the exact same
+        // `settings.sidebarCornerRadius` value the sidebar itself uses for
+        // its facing corner, so the seam between the two always matches and
+        // the corner-radius slider visibly moves both sides.
+        let showsChrome = !browser.isFullScreenActive
+        let facingRadius: CGFloat = (showsChrome && sidebarShouldShow) ? settings.sidebarCornerRadius : 0
 
-        if let tab = browser.currentTab {
+        if let splitTabID = browser.splitTabID, let splitTab = browser.tab(withID: splitTabID), let primaryTab = browser.currentTab {
+            // Split View: primary pane keeps the sidebar-facing rounded
+            // corner; the split pane's outer (trailing) edge is square since
+            // it's flush with the physical screen edge; the shared seam in
+            // the middle stays square on both sides, same reasoning as the
+            // sidebar/content seam.
+            GeometryReader { geo in
+                let dividerWidth: CGFloat = 6
+                let usable = geo.size.width - dividerWidth
+                let leadingWidth = max(200, usable * browser.splitDividerFraction)
+
+                HStack(spacing: 0) {
+                    pane(for: primaryTab, controller: browser.currentController,
+                         radii: RectangleCornerRadii(topLeading: facingRadius, bottomLeading: facingRadius, bottomTrailing: 0, topTrailing: 0))
+                        .frame(width: leadingWidth)
+
+                    SplitDividerHandle(usableWidth: usable, fraction: $browser.splitDividerFraction)
+                        .frame(width: dividerWidth)
+
+                    pane(for: splitTab, controller: browser.webControllers[splitTabID],
+                         radii: RectangleCornerRadii(topLeading: 0, bottomLeading: 0, bottomTrailing: 0, topTrailing: 0))
+                        .frame(maxWidth: .infinity)
+                        .overlay(alignment: .topTrailing) {
+                            Button { browser.closeSplit() } label: {
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(.white.opacity(0.7))
+                                    .frame(width: 24, height: 24)
+                                    .background(Circle().fill(Color.black.opacity(0.35)))
+                            }
+                            .buttonStyle(PressFeedbackButtonStyle())
+                            .padding(8)
+                        }
+                }
+            }
+        } else {
+            let radii = RectangleCornerRadii(topLeading: facingRadius, bottomLeading: facingRadius, bottomTrailing: 0, topTrailing: 0)
+            pane(for: browser.currentTab, controller: browser.currentController, radii: radii)
+        }
+    }
+
+    /// Renders one tab's content (Start page, loading web view, or error
+    /// page) clipped and backed to the given corner radii. Shared by both
+    /// the normal single-pane layout and each side of Split View.
+    @ViewBuilder
+    private func pane(for tab: BrowserTab?, controller: WebViewController?, radii: RectangleCornerRadii) -> some View {
+        let shape = UnevenRoundedRectangle(cornerRadii: radii, style: .continuous)
+
+        if let tab {
             if tab.urlString == "trident://start" {
                 StartPageView()
-                    .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-                    .background(GlassPanel(cornerRadius: cornerRadius, tintOpacity: 0.35) { Color.clear })
-            } else if let controller = browser.currentController {
+                    .clipShape(shape)
+                    .background(GlassPanel(cornerRadii: radii, tintOpacity: 0.35) { Color.clear })
+            } else if let controller {
                 ZStack {
                     BrowserWebView(controller: controller)
                         .id(controller.id)
@@ -212,7 +263,9 @@ struct ContentView: View {
                         .padding(.top, 2)
                     }
                 }
-                .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                .clipShape(shape)
+            } else {
+                ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         } else {
             ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -223,6 +276,37 @@ struct ContentView: View {
 /// A slim, draggable grip on the sidebar's trailing edge. Press and drag
 /// horizontally to resize the sidebar; the width is clamped so it can never
 /// crush the content area, even in a narrow multitasking window.
+private struct SplitDividerHandle: View {
+    let usableWidth: CGFloat
+    @Binding var fraction: Double
+    @State private var isDragging = false
+    @State private var dragStartFraction: Double?
+
+    var body: some View {
+        ZStack {
+            Capsule()
+                .fill(Color.white.opacity(isDragging ? 0.35 : 0.16))
+                .frame(width: 3, height: 44)
+        }
+        .frame(maxHeight: .infinity)
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { value in
+                    if dragStartFraction == nil { dragStartFraction = fraction }
+                    isDragging = true
+                    guard usableWidth > 0, let start = dragStartFraction else { return }
+                    let delta = value.translation.width / usableWidth
+                    fraction = min(0.8, max(0.2, start + delta))
+                }
+                .onEnded { _ in
+                    isDragging = false
+                    dragStartFraction = nil
+                }
+        )
+    }
+}
+
 private struct SidebarResizeHandle: View {
     @EnvironmentObject var browser: BrowserViewModel
     @EnvironmentObject var settings: AppSettings

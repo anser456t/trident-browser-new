@@ -29,6 +29,14 @@ final class BrowserViewModel: ObservableObject {
     /// sidebar from ever crushing the content area in a narrow multitasking
     /// window or a resized windowed-mode session.
     @Published var maxAllowedSidebarWidth: Double = 400
+    /// When set, `ContentView` renders this tab's web content side-by-side
+    /// with the current tab (Split View) instead of full-width. `nil` means
+    /// no split is active.
+    @Published var splitTabID: UUID?
+    /// Fraction (0...1) of the content area's width given to the leading
+    /// (primary) pane while Split View is active. Persists across tab
+    /// switches within the session so dragging the divider "sticks".
+    @Published var splitDividerFraction: Double = 0.5
 
     /// Live WKWebView controllers, keyed by tab id. Created lazily, evicted for archived tabs.
     @Published private(set) var webControllers: [UUID: WebViewController] = [:]
@@ -145,6 +153,28 @@ final class BrowserViewModel: ObservableObject {
         spaces.first { $0.id == currentSpaceID }
     }
 
+    // MARK: - Split View
+
+    /// Opens `tab` alongside the current tab in a second pane. Splitting a
+    /// tab with itself is a no-op — there'd be nothing to compare it to.
+    func openInSplit(_ tab: BrowserTab) {
+        guard tab.id != currentTabID else { return }
+        splitTabID = tab.id
+        activateWebController(for: tab.id)
+    }
+
+    func closeSplit() {
+        splitTabID = nil
+    }
+
+    /// Promotes the split pane to be the primary tab and closes the split —
+    /// used when the user wants to "swap" which side is primary.
+    func swapSplitToPrimary() {
+        guard let splitTabID, let tab = tab(withID: splitTabID) else { return }
+        self.splitTabID = nil
+        select(tab: tab)
+    }
+
     // MARK: - Tab lifecycle
 
     @discardableResult
@@ -167,6 +197,13 @@ final class BrowserViewModel: ObservableObject {
     }
 
     func select(tab: BrowserTab) {
+        // Selecting the tab that's currently in the split pane as the new
+        // primary would show the same page in both panes — treat it as
+        // "promote split to primary" instead, which is the only sensible
+        // outcome and matches what the user's tap looks like they meant.
+        if splitTabID == tab.id {
+            splitTabID = nil
+        }
         currentTabID = tab.id
         tab.lastAccessedAt = Date()
         saveContext()
@@ -193,6 +230,10 @@ final class BrowserViewModel: ObservableObject {
         tabs.removeAll { $0.id == tab.id }
         context.delete(tab)
         saveContext()
+
+        if splitTabID == tab.id {
+            splitTabID = nil
+        }
 
         if currentTabID == tab.id {
             if let next = firstSelectableTab() {

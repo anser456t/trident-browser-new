@@ -114,6 +114,11 @@ final class AppSettings: ObservableObject {
     // Appearance
     @Published var colorSchemePreference: ColorSchemePreference { didSet { save(colorSchemePreference.rawValue, "colorSchemePreference") } }
     @Published var accentColorHex: String { didSet { save(accentColorHex, "accentColorHex") } }
+    /// Tracks which `ThemePreset` (if any) was last tapped, purely so the
+    /// Appearance screen can show a selection ring on it. Manually tweaking
+    /// any individual slider afterward doesn't clear this — it's a "what did
+    /// I start from" marker, not a locked mode.
+    @Published var lastAppliedThemePresetID: String? { didSet { save(lastAppliedThemePresetID, "lastAppliedThemePresetID") } }
     @Published var backgroundStyle: BackgroundStyle { didSet { save(backgroundStyle.rawValue, "backgroundStyle") } }
     @Published var backgroundSolidHex: String { didSet { save(backgroundSolidHex, "backgroundSolidHex") } }
     @Published var gradientStartHex: String { didSet { save(gradientStartHex, "gradientStartHex") } }
@@ -187,6 +192,7 @@ final class AppSettings: ObservableObject {
 
         colorSchemePreference = ColorSchemePreference(rawValue: d.string(forKey: "colorSchemePreference") ?? "") ?? .dark
         accentColorHex = d.string(forKey: "accentColorHex") ?? AccentPreset.lavender.hex
+        lastAppliedThemePresetID = d.string(forKey: "lastAppliedThemePresetID")
         backgroundStyle = BackgroundStyle(rawValue: d.string(forKey: "backgroundStyle") ?? "") ?? .defaultStyle
         backgroundSolidHex = d.string(forKey: "backgroundSolidHex") ?? "#0B0B12"
         gradientStartHex = d.string(forKey: "gradientStartHex") ?? "#7C3AED"

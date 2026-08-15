@@ -164,6 +164,9 @@ struct CompactTabStripView: View {
         .contextMenu {
             Button("Unpin Tab", systemImage: "pin.slash") { browser.togglePin(tab) }
             Button("Duplicate Tab", systemImage: "plus.square.on.square") { browser.duplicateTab(tab) }
+            if !isActive {
+                Button("Split View", systemImage: "rectangle.split.2x1") { browser.openInSplit(tab) }
+            }
             Button("Archive Tab", systemImage: "archivebox") { browser.archive(tab) }
             Divider()
             Button("Close Tab", systemImage: "xmark", role: .destructive) { browser.closeTab(tab) }
@@ -180,6 +183,20 @@ struct CompactTabStripView: View {
                 Text(tab.title.isEmpty ? "New Tab" : tab.title)
                     .font(.caption2)
                     .lineLimit(1)
+                // Matches TabRowView in the full sidebar: only the tab
+                // you're currently on gets an always-visible close button.
+                if isActive {
+                    Button {
+                        browser.closeTab(tab)
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundStyle(.white.opacity(0.6))
+                            .frame(width: 15, height: 15)
+                            .background(Circle().fill(Color.white.opacity(0.12)))
+                    }
+                    .buttonStyle(PressFeedbackButtonStyle())
+                }
             }
             .foregroundStyle(isActive ? .white : .white.opacity(0.6))
             .padding(.horizontal, 8)
@@ -190,12 +207,17 @@ struct CompactTabStripView: View {
             )
         }
         .buttonStyle(.plain)
-        .frame(maxWidth: 140)
+        .frame(maxWidth: 160)
         .contextMenu {
             Button(tab.isPinned ? "Unpin Tab" : "Pin Tab", systemImage: tab.isPinned ? "pin.slash" : "pin") {
                 browser.togglePin(tab)
             }
             Button("Duplicate Tab", systemImage: "plus.square.on.square") { browser.duplicateTab(tab) }
+            if !isActive {
+                Button("Split View", systemImage: "rectangle.split.2x1") { browser.openInSplit(tab) }
+            } else if browser.splitTabID != nil {
+                Button("Close Split View", systemImage: "rectangle.split.2x1", role: .destructive) { browser.closeSplit() }
+            }
             Button("Archive Tab", systemImage: "archivebox") { browser.archive(tab) }
             Divider()
             Button("Close Tab", systemImage: "xmark", role: .destructive) { browser.closeTab(tab) }
