@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>body { font-family: -apple-system, sans-serif; background:#1c1c26; color:white; padding:20px; }
+button { padding: 8px 12px; }</style>
+</head>
+<body>
+  <h1>Messaging Test</h1>
+  <button id="send">Send test message</button>
+  <script>
+    document.getElementById('send').addEventListener('click', function() {
+      chrome.runtime.sendMessage({ hello: "from popup" });
+    });
+  </script>
+</body></html>

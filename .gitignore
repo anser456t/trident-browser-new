@@ -1,0 +1,23 @@
+# Xcode
+*.xcodeproj/
+!default.xcodeproj
+xcuserdata/
+DerivedData/
+*.moved-aside
+*.xcuserstate
+*.xcscmblueprint
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Build outputs
+build-output/
+*.ipa
+*.xcarchive
+
+# macOS
+.DS_Store
+
+# XcodeGen generates the project — don't commit the generated file
+Trident.xcodeproj
