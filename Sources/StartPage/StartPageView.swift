@@ -50,17 +50,25 @@ struct StartPageView: View {
     }
 
     /// The Home-specific "Background" personalization (Settings ▸ Home
-    /// Screen ▸ Background) — a tint + blur layer behind the Start page's
+    /// Screen ▸ Background) — a tint + frost layer behind the Start page's
     /// own content only, independent of the app-wide wallpaper.
+    ///
+    /// The "Blur" slider used to layer `.ultraThinMaterial` on top of a
+    /// backdrop that's *already* gaussian-blurred by the app-wide
+    /// `backgroundBlurAmount` — blurring already-blurred, detail-free
+    /// content changes nothing visible, so the slider did nothing on its
+    /// own unless the Tint Opacity color was also turned up. `.regularMaterial`
+    /// has real visual weight/frosting on its own regardless of what's
+    /// behind it, so this now visibly changes with the slider by itself.
     private var homeBackgroundLayer: some View {
         ZStack {
-            if settings.homeBackgroundOpacity > 0.001 {
-                Color(hex: settings.homeBackgroundColorHex).opacity(settings.homeBackgroundOpacity)
-            }
             if settings.homeBackgroundBlur > 0.001 {
                 Rectangle()
-                    .fill(.ultraThinMaterial)
+                    .fill(.regularMaterial)
                     .opacity(min(settings.homeBackgroundBlur / 40.0, 1.0))
+            }
+            if settings.homeBackgroundOpacity > 0.001 {
+                Color(hex: settings.homeBackgroundColorHex).opacity(settings.homeBackgroundOpacity)
             }
         }
         .ignoresSafeArea()

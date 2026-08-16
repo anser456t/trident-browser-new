@@ -46,21 +46,14 @@ struct ContentView: View {
                         .transition(.opacity)
                 }
 
-                // In normal browsing the floating window card now sits below
-                // the status bar with a margin gap (see `mainLayout`), so
-                // the status bar row sits directly over the wallpaper —
-                // frosting it here keeps the clock/battery/wifi readable
-                // over whatever's behind it, matching the reference look.
-                // Full screen is deliberately excluded — it already has its
-                // own separate "Hide Status Bar" setting above.
-                if !browser.isFullScreenActive && geo.safeAreaInsets.top > 0 {
-                    Rectangle()
-                        .fill(.ultraThinMaterial)
-                        .frame(height: geo.safeAreaInsets.top)
-                        .frame(maxWidth: .infinity, alignment: .top)
-                        .ignoresSafeArea(edges: .top)
-                        .allowsHitTesting(false)
-                }
+                // Normal browsing intentionally does NOT draw anything extra
+                // behind the status bar anymore. It used to get its own
+                // separate `.ultraThinMaterial` strip here — but that's a
+                // completely different blur (UIKit's vibrancy material) from
+                // covers the whole screen including this area. Layering the
+                // two produced a visible seam right at the status bar edge.
+                // Status bar is left fully transparent so the one blurred
+                // background is all that ever shows through, everywhere.
 
                 if browser.isFullScreenActive {
                     Button {
@@ -168,15 +161,14 @@ struct ContentView: View {
                         SidebarResizeHandle()
                     }
 
-                    contentColumn(showsChrome: true)
-                }
-                .padding(.leading, safeAreaInsets.leading + settings.windowMargin)
+                    contentColumn(showsChrome: true, roundCorners: sidebarShouldShow)
+                }                .padding(.leading, safeAreaInsets.leading + settings.windowMargin)
                 .padding(.trailing, safeAreaInsets.trailing + settings.windowMargin)
                 .padding(.top, safeAreaInsets.top + settings.windowMargin)
                 .padding(.bottom, safeAreaInsets.bottom + settings.windowMargin)
             } else {
                 // Full screen: no sidebar, no card, true edge-to-edge.
-                contentColumn(showsChrome: false)
+                contentColumn(showsChrome: false, roundCorners: false)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -185,9 +177,15 @@ struct ContentView: View {
     /// The right-hand column: compact tab strip / private banner / web
     /// content. In normal browsing this whole column is wrapped in a single
     /// floating `GlassPanel` — the "webpage card" from the mockup. In full
-    /// screen it's plain, unwrapped content instead.
+    /// screen it's plain, unwrapped content instead. `roundCorners` is
+    /// separate from `showsChrome`: the card itself (margin/blur/tint/
+    /// shadow) still shows whether or not the sidebar is open, but the
+    /// corner-radius setting should only round it while the sidebar is
+    /// actually showing next to it — with the sidebar hidden the card spans
+    /// the full width and squared-off corners read as a normal window
+    /// rather than a floating card, which is what looked wrong before.
     @ViewBuilder
-    private func contentColumn(showsChrome: Bool) -> some View {
+    private func contentColumn(showsChrome: Bool, roundCorners: Bool) -> some View {
         let inner = VStack(spacing: 6) {
             if !sidebarShouldShow && showsChrome {
                 CompactTabStripView(showsSidebarToggle: !isHomeTab)
@@ -203,7 +201,7 @@ struct ContentView: View {
 
         if showsChrome {
             GlassPanel(
-                cornerRadius: settings.sidebarCornerRadius,
+                cornerRadius: roundCorners ? settings.sidebarCornerRadius : 0,
                 tintOpacity: settings.sidebarTransparency,
                 blurAmount: settings.sidebarBlur
             ) {
