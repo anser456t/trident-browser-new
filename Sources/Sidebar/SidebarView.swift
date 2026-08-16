@@ -15,31 +15,11 @@ struct SidebarView: View {
     @State private var showingAddQuickTile = false
 
     var body: some View {
-        // The sidebar now has its own frosted-glass card again, driven by
-        // Settings ▸ Sidebar ▸ Blur Amount (`settings.sidebarBlur`). The web
-        // content card is a separate surface with its own independent blur
-        // control (Settings ▸ Appearance ▸ Content Card Blur /
-        // `settings.contentCardBlur`) — the two used to be wired to the same
-        // property, which meant this slider visibly blurred the web page
-        // instead of the sidebar and left the sidebar itself always sharp.
-        GlassPanel(
-            cornerRadius: settings.sidebarCornerRadius,
-            tintOpacity: settings.sidebarTransparency,
-            blurAmount: settings.sidebarBlur
-        ) {
-            sidebarContent
-        }
-        .frame(width: min(browser.sidebarDragWidth ?? settings.sidebarWidth, browser.maxAllowedSidebarWidth))
-        .sheet(isPresented: $showingSettings) { SettingsView() }
-        .sheet(isPresented: $showingHistory) { HistoryView() }
-        .sheet(isPresented: $showingBookmarks) { BookmarksView() }
-        .sheet(isPresented: $showingDownloads) { DownloadsView() }
-        .sheet(isPresented: $showingAddQuickTile) {
-            QuickTileEditorSheet(nextSortOrder: (bookmarkItems.map(\.sortOrder).max() ?? -1) + 1)
-        }
-    }
-
-    private var sidebarContent: some View {
+        // No longer wraps itself in its own `GlassPanel` — the sidebar and
+        // web content now share ONE floating card as a single window (see
+        // `ContentView.windowContent`), so the glass background/border/
+        // shadow/corner-rounding all live there instead. This is now just
+        // plain content sized to the sidebar's width.
         VStack(alignment: .leading, spacing: 12) {
                 // Nav controls (back/forward/reload, fullscreen) live on the
                 // same row as the sidebar-hide control, docked to it — this
@@ -157,6 +137,14 @@ struct SidebarView: View {
                 )
             }
             .padding(12)
+            .frame(width: min(browser.sidebarDragWidth ?? settings.sidebarWidth, browser.maxAllowedSidebarWidth))
+            .sheet(isPresented: $showingSettings) { SettingsView() }
+            .sheet(isPresented: $showingHistory) { HistoryView() }
+            .sheet(isPresented: $showingBookmarks) { BookmarksView() }
+            .sheet(isPresented: $showingDownloads) { DownloadsView() }
+            .sheet(isPresented: $showingAddQuickTile) {
+                QuickTileEditorSheet(nextSortOrder: (bookmarkItems.map(\.sortOrder).max() ?? -1) + 1)
+            }
     }
 
     /// Row of pinned "shortcut" icons — unlike a tab in the list below, tapping

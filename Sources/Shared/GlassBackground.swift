@@ -198,12 +198,21 @@ struct AppBackgroundView: View {
                 }
             }
         }
-        .blur(radius: settings.backgroundBlurAmount)
-        // The blur softens edges outward, which otherwise left a faint sharp
-        // sliver of the un-blurred backdrop visible right at the screen
-        // border. Scaling up slightly keeps the blurred image covering the
-        // full screen with no edge artifact.
-        .scaleEffect(1 + min(settings.backgroundBlurAmount / 200, 0.15))
+        // This is what the "Background Blur" slider in Appearance settings
+        // drives — it's meant to be the one control for the area behind the
+        // sidebar / top bar / bottom bar (they have no card/background of
+        // their own, see `SidebarSettingsView`), but it used to apply a plain
+        // SwiftUI `.blur(radius:)` + compensating `.scaleEffect()` directly to
+        // this ZStack, which wasn't visibly doing anything. Switched to
+        // `VariableBlurView` — the same real `UIVisualEffectView` blur already
+        // used for the content card's own blur slider and known to work —
+        // layered as a full-screen overlay instead of blurring this view's own
+        // pixels. Still driven by the exact same `settings.backgroundBlurAmount`
+        // value, so no new setting: the existing slider just works now.
+        .overlay(
+            VariableBlurView(intensity: settings.backgroundBlurAmount / 40.0)
+                .allowsHitTesting(false)
+        )
         .ignoresSafeArea()
     }
 

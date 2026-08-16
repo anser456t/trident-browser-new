@@ -204,7 +204,7 @@ struct ContentView: View {
             GlassPanel(
                 cornerRadius: roundCorners ? settings.sidebarCornerRadius : 0,
                 tintOpacity: settings.sidebarTransparency,
-                blurAmount: settings.contentCardBlur
+                blurAmount: settings.sidebarBlur
             ) {
                 inner
             }
