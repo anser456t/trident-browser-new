@@ -50,6 +50,7 @@ struct ContentView: View {
                 // behind the status bar anymore. It used to get its own
                 // separate `.ultraThinMaterial` strip here — but that's a
                 // completely different blur (UIKit's vibrancy material) from
+                // `AppBackgroundView`'s own `.blur(radius:)`, which already
                 // covers the whole screen including this area. Layering the
                 // two produced a visible seam right at the status bar edge.
                 // Status bar is left fully transparent so the one blurred
