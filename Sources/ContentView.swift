@@ -151,57 +151,67 @@ struct ContentView: View {
 
         Group {
             if showsChrome {
-                // Sidebar + web content are now ONE floating card — a single
-                // `GlassPanel` wraps both, so there's exactly one background,
-                // one border, one shadow, and one corner radius for the
-                // whole window (previously each side had its own, uneven
-                // corners, and no visible margin at all — this is the
-                // "floating card over the wallpaper" look instead of the
-                // edge-to-edge one).
-                GlassPanel(
-                    cornerRadius: settings.sidebarCornerRadius,
-                    tintOpacity: settings.sidebarTransparency,
-                    blurAmount: settings.sidebarBlur
-                ) {
-                    windowContent(showsChrome: showsChrome)
+                // Sidebar has NO card of its own now — its controls sit
+                // directly on the blurred `AppBackgroundView`, exactly like
+                // the red mockup: the sidebar region is just "background,
+                // with sidebar stuff drawn on top of it", not a separate
+                // panel. Only the web content gets a floating card (glass
+                // background + border + shadow + rounded corners) — that's
+                // the one piece meant to look like a window sitting above
+                // the backdrop, drop shadow included.
+                HStack(spacing: 0) {
+                    if sidebarShouldShow {
+                        SidebarView()
+                            .frame(maxHeight: .infinity)
+                            .transition(.move(edge: .leading).combined(with: .opacity))
+
+                        SidebarResizeHandle()
+                    }
+
+                    contentColumn(showsChrome: true)
                 }
                 .padding(.leading, safeAreaInsets.leading + settings.windowMargin)
                 .padding(.trailing, safeAreaInsets.trailing + settings.windowMargin)
                 .padding(.top, safeAreaInsets.top + settings.windowMargin)
                 .padding(.bottom, safeAreaInsets.bottom + settings.windowMargin)
             } else {
-                // Full screen stays true edge-to-edge with no card at all.
-                windowContent(showsChrome: showsChrome)
+                // Full screen: no sidebar, no card, true edge-to-edge.
+                contentColumn(showsChrome: false)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
+    /// The right-hand column: compact tab strip / private banner / web
+    /// content. In normal browsing this whole column is wrapped in a single
+    /// floating `GlassPanel` — the "webpage card" from the mockup. In full
+    /// screen it's plain, unwrapped content instead.
     @ViewBuilder
-    private func windowContent(showsChrome: Bool) -> some View {
-        HStack(spacing: 0) {
-            if sidebarShouldShow && showsChrome {
-                SidebarView()
-                    .frame(maxHeight: .infinity)
-                    .transition(.move(edge: .leading).combined(with: .opacity))
-
-                SidebarResizeHandle()
+    private func contentColumn(showsChrome: Bool) -> some View {
+        let inner = VStack(spacing: 6) {
+            if !sidebarShouldShow && showsChrome {
+                CompactTabStripView(showsSidebarToggle: !isHomeTab)
             }
 
-            VStack(spacing: 6) {
-                if !sidebarShouldShow && showsChrome {
-                    CompactTabStripView(showsSidebarToggle: !isHomeTab)
-                }
-
-                if browser.isPrivateModeActive && showsChrome {
-                    PrivateBrowsingBanner()
-                }
-
-                webContentArea
+            if browser.isPrivateModeActive && showsChrome {
+                PrivateBrowsingBanner()
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            webContentArea
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+        if showsChrome {
+            GlassPanel(
+                cornerRadius: settings.sidebarCornerRadius,
+                tintOpacity: settings.sidebarTransparency,
+                blurAmount: settings.sidebarBlur
+            ) {
+                inner
+            }
+        } else {
+            inner
+        }
     }
 
     @ViewBuilder
@@ -317,20 +327,17 @@ private struct SidebarResizeHandle: View {
     @State private var isDragging = false
 
     var body: some View {
-        // The old handle was a 44pt-tall capsule vertically centered in a
-        // (usually much taller) sidebar, so most of the edge wasn't
-        // draggable at all. This version makes the *entire* height of the
-        // sidebar edge grabbable — the capsule is still what's drawn, but the
-        // hit area behind it spans top to bottom. Sidebar and content now
-        // share one card with no gap between them, so this is just a thin
-        // in-card divider/grip rather than a strip that shows background
-        // through it.
+        // Sits in the gap between the sidebar (no card of its own) and the
+        // content card, so its width tracks `settings.windowMargin` — the
+        // same value used for the outer margins — rather than a fixed size,
+        // so the drag target roughly matches however wide that gap actually
+        // is on screen.
         ZStack {
             Capsule()
                 .fill(Color.white.opacity(isDragging ? 0.3 : 0.14))
                 .frame(width: 3, height: 44)
         }
-        .frame(width: 10)
+        .frame(width: max(10, settings.windowMargin))
         .frame(maxHeight: .infinity)
         .contentShape(Rectangle())
         .gesture(

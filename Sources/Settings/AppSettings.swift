@@ -126,6 +126,11 @@ final class AppSettings: ObservableObject {
     @Published var gradientIntensity: Double { didSet { save(gradientIntensity, "gradientIntensity") } }
     @Published var customBackgroundImagePath: String? { didSet { save(customBackgroundImagePath, "customBackgroundImagePath") } }
     @Published var backgroundImageBlur: Double { didSet { save(backgroundImageBlur, "backgroundImageBlur") } }
+    /// Applies to the background as a whole, regardless of which style above
+    /// is active — a single "soften everything behind the window" control,
+    /// separate from `backgroundImageBlur` which only affects the Image style
+    /// specifically (and is layered with this one, not replaced by it).
+    @Published var backgroundBlurAmount: Double { didSet { save(backgroundBlurAmount, "backgroundBlurAmount") } }
     @Published var backgroundImageOpacity: Double { didSet { save(backgroundImageOpacity, "backgroundImageOpacity") } }
     @Published var backgroundImageFillMode: BackgroundFillMode { didSet { save(backgroundImageFillMode.rawValue, "backgroundImageFillMode") } }
 
@@ -201,6 +206,7 @@ final class AppSettings: ObservableObject {
         gradientIntensity = d.object(forKey: "gradientIntensity") as? Double ?? 0.6
         customBackgroundImagePath = d.string(forKey: "customBackgroundImagePath")
         backgroundImageBlur = d.object(forKey: "backgroundImageBlur") as? Double ?? 0
+        backgroundBlurAmount = d.object(forKey: "backgroundBlurAmount") as? Double ?? 26
         backgroundImageOpacity = d.object(forKey: "backgroundImageOpacity") as? Double ?? 1.0
         backgroundImageFillMode = BackgroundFillMode(rawValue: d.string(forKey: "backgroundImageFillMode") ?? "") ?? .fill
 

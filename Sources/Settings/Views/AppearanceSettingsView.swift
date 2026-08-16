@@ -145,6 +145,16 @@ struct AppearanceSettingsView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+
+                Divider().padding(.vertical, 4)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Background Blur").foregroundStyle(.secondary)
+                    Slider(value: $settings.backgroundBlurAmount, in: 0...40)
+                }
+                Text("Softens the whole background — this is what shows behind the sidebar and around the web page card in the floating window layout, regardless of which style is selected above.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             AppearancePreview()

@@ -163,6 +163,10 @@ enum BackgroundImageStore {
 }
 
 /// The app-wide background: solid / gradient / image / default, driven by AppSettings.
+/// Always rendered with a soft blur now — in the floating-card layout this is
+/// the surface that shows *around* the content card and behind the sidebar
+/// (which no longer has its own card/background of its own), so it reads as
+/// one continuous frosted backdrop rather than a sharp photo.
 struct AppBackgroundView: View {
     @EnvironmentObject private var settings: AppSettings
 
@@ -194,6 +198,13 @@ struct AppBackgroundView: View {
                 }
             }
         }
+        .blur(radius: settings.backgroundBlurAmount)
+        // The blur softens edges outward, which otherwise left a faint sharp
+        // sliver of the un-blurred backdrop visible right at the screen
+        // border. Scaling up slightly keeps the blurred image covering the
+        // full screen with no edge artifact.
+        .scaleEffect(1 + min(settings.backgroundBlurAmount / 200, 0.15))
+        .ignoresSafeArea()
     }
 
     private var defaultBackground: some View {

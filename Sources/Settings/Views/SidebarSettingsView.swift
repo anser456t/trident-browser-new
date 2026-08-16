@@ -5,8 +5,8 @@ struct SidebarSettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
-            settingsGroup("Window") {
-                Text("The sidebar and web page now share one floating card — these apply to the whole window, not just the sidebar.")
+            settingsGroup("Content Card") {
+                Text("The web page floats as its own card with a drop shadow. The sidebar has no card of its own — it sits directly on the background (see Appearance ▸ Background Blur).")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 sliderRow("Window Margin", value: $settings.windowMargin, range: 0...48, unit: "pt")
