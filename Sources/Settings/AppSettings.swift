@@ -145,12 +145,14 @@ final class AppSettings: ObservableObject {
     /// Vertical margin between the sidebar panel and the top/bottom of the window.
     /// Smaller values make the sidebar taller; larger values shrink it. This is how
     /// users adjust sidebar "height" without breaking the full-bleed layout.
-    @Published var sidebarVerticalInset: Double { didSet { save(sidebarVerticalInset, "sidebarVerticalInset") } }
-    /// Horizontal gap between the sidebar and the web content column,
-    /// controlled by the resize-handle's hit width. Small by default to
-    /// match a full-bleed layout, but adjustable since a very thin gap can
-    /// be hard to grab/see.
-    @Published var sidebarContentGap: Double { didSet { save(sidebarContentGap, "sidebarContentGap") } }
+    /// Margin between the *entire* browser window (sidebar + web content,
+    /// merged into a single floating card — see `ContentView.windowContent`)
+    /// and the physical screen edges. Replaces the old separate
+    /// "sidebar height margin" and "gap between sidebar & page" — now that
+    /// sidebar and content share one card there's nothing for a gap between
+    /// them to mean, and the margin needs to apply on every side, not just
+    /// top/bottom.
+    @Published var windowMargin: Double { didSet { save(windowMargin, "windowMargin") } }
 
     // Tabs
     @Published var archiveInterval: ArchiveInterval { didSet { save(archiveInterval.rawValue, "archiveInterval") } }
@@ -211,8 +213,7 @@ final class AppSettings: ObservableObject {
         sidebarAlwaysShow = d.object(forKey: "sidebarAlwaysShow") as? Bool ?? true
         sidebarAutoHide = d.object(forKey: "sidebarAutoHide") as? Bool ?? false
         hideStatusBarInFullScreen = d.object(forKey: "hideStatusBarInFullScreen") as? Bool ?? false
-        sidebarVerticalInset = d.object(forKey: "sidebarVerticalInset") as? Double ?? 0
-        sidebarContentGap = d.object(forKey: "sidebarContentGap") as? Double ?? 5
+        windowMargin = d.object(forKey: "windowMargin") as? Double ?? 14
 
         archiveInterval = ArchiveInterval(rawValue: d.string(forKey: "archiveInterval") ?? "") ?? .sevenDays
         lastActiveSpaceIDString = d.string(forKey: "lastActiveSpaceID")

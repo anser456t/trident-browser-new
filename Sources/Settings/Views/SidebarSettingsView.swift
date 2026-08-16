@@ -5,13 +5,18 @@ struct SidebarSettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
-            settingsGroup("Layout") {
-                sliderRow("Sidebar Width", value: $settings.sidebarWidth, range: 260...400, unit: "pt")
-                sliderRow("Sidebar Height Margin", value: $settings.sidebarVerticalInset, range: 0...48, unit: "pt")
-                sliderRow("Gap Between Sidebar & Page", value: $settings.sidebarContentGap, range: 0...24, unit: "pt")
+            settingsGroup("Window") {
+                Text("The sidebar and web page now share one floating card — these apply to the whole window, not just the sidebar.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                sliderRow("Window Margin", value: $settings.windowMargin, range: 0...48, unit: "pt")
+                sliderRow("Corner Radius", value: $settings.sidebarCornerRadius, range: 0...28, unit: "pt")
                 sliderRow("Transparency", value: $settings.sidebarTransparency, range: 0.2...0.9, unit: "%", isPercent: true)
                 sliderRow("Blur Amount", value: $settings.sidebarBlur, range: 0...40, unit: "pt")
-                sliderRow("Corner Radius", value: $settings.sidebarCornerRadius, range: 0...28, unit: "pt")
+            }
+
+            settingsGroup("Sidebar") {
+                sliderRow("Sidebar Width", value: $settings.sidebarWidth, range: 260...400, unit: "pt")
             }
 
             settingsGroup("Display") {

@@ -15,22 +15,12 @@ struct SidebarView: View {
     @State private var showingAddQuickTile = false
 
     var body: some View {
-        // Only the trailing corners (facing the web content) round off — the
-        // sidebar's leading/top/bottom edges sit flush against the physical
-        // screen edge now, so rounding them would just clip into empty space.
-        // `ContentView.webContentArea` rounds its own leading corners by this
-        // same `settings.sidebarCornerRadius` value, so the seam between the
-        // two panels always lines up, and the corner-radius slider visibly
-        // moves both sides together instead of only affecting the sidebar.
-        GlassPanel(
-            cornerRadii: RectangleCornerRadii(
-                topLeading: 0, bottomLeading: 0,
-                bottomTrailing: settings.sidebarCornerRadius, topTrailing: settings.sidebarCornerRadius
-            ),
-            tintOpacity: settings.sidebarTransparency,
-            blurAmount: settings.sidebarBlur
-        ) {
-            VStack(alignment: .leading, spacing: 12) {
+        // No longer wraps itself in its own `GlassPanel` — the sidebar and
+        // web content now share ONE floating card as a single window (see
+        // `ContentView.windowContent`), so the glass background/border/
+        // shadow/corner-rounding all live there instead. This is now just
+        // plain content sized to the sidebar's width.
+        VStack(alignment: .leading, spacing: 12) {
                 // Nav controls (back/forward/reload, fullscreen) live on the
                 // same row as the sidebar-hide control, docked to it — this
                 // keeps the address bar itself down to just the URL field and
@@ -147,15 +137,14 @@ struct SidebarView: View {
                 )
             }
             .padding(12)
-        }
-        .frame(width: min(browser.sidebarDragWidth ?? settings.sidebarWidth, browser.maxAllowedSidebarWidth))
-        .sheet(isPresented: $showingSettings) { SettingsView() }
-        .sheet(isPresented: $showingHistory) { HistoryView() }
-        .sheet(isPresented: $showingBookmarks) { BookmarksView() }
-        .sheet(isPresented: $showingDownloads) { DownloadsView() }
-        .sheet(isPresented: $showingAddQuickTile) {
-            QuickTileEditorSheet(nextSortOrder: (bookmarkItems.map(\.sortOrder).max() ?? -1) + 1)
-        }
+            .frame(width: min(browser.sidebarDragWidth ?? settings.sidebarWidth, browser.maxAllowedSidebarWidth))
+            .sheet(isPresented: $showingSettings) { SettingsView() }
+            .sheet(isPresented: $showingHistory) { HistoryView() }
+            .sheet(isPresented: $showingBookmarks) { BookmarksView() }
+            .sheet(isPresented: $showingDownloads) { DownloadsView() }
+            .sheet(isPresented: $showingAddQuickTile) {
+                QuickTileEditorSheet(nextSortOrder: (bookmarkItems.map(\.sortOrder).max() ?? -1) + 1)
+            }
     }
 
     /// Row of pinned "shortcut" icons — unlike a tab in the list below, tapping

@@ -46,6 +46,22 @@ struct ContentView: View {
                         .transition(.opacity)
                 }
 
+                // In normal browsing the floating window card now sits below
+                // the status bar with a margin gap (see `mainLayout`), so
+                // the status bar row sits directly over the wallpaper —
+                // frosting it here keeps the clock/battery/wifi readable
+                // over whatever's behind it, matching the reference look.
+                // Full screen is deliberately excluded — it already has its
+                // own separate "Hide Status Bar" setting above.
+                if !browser.isFullScreenActive && geo.safeAreaInsets.top > 0 {
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                        .frame(height: geo.safeAreaInsets.top)
+                        .frame(maxWidth: .infinity, alignment: .top)
+                        .ignoresSafeArea(edges: .top)
+                        .allowsHitTesting(false)
+                }
+
                 if browser.isFullScreenActive {
                     Button {
                         browser.isFullScreenActive = false
@@ -133,29 +149,39 @@ struct ContentView: View {
     private func mainLayout(safeAreaInsets: EdgeInsets) -> some View {
         let showsChrome = !browser.isFullScreenActive
 
+        Group {
+            if showsChrome {
+                // Sidebar + web content are now ONE floating card — a single
+                // `GlassPanel` wraps both, so there's exactly one background,
+                // one border, one shadow, and one corner radius for the
+                // whole window (previously each side had its own, uneven
+                // corners, and no visible margin at all — this is the
+                // "floating card over the wallpaper" look instead of the
+                // edge-to-edge one).
+                GlassPanel(
+                    cornerRadius: settings.sidebarCornerRadius,
+                    tintOpacity: settings.sidebarTransparency,
+                    blurAmount: settings.sidebarBlur
+                ) {
+                    windowContent(showsChrome: showsChrome)
+                }
+                .padding(.leading, safeAreaInsets.leading + settings.windowMargin)
+                .padding(.trailing, safeAreaInsets.trailing + settings.windowMargin)
+                .padding(.top, safeAreaInsets.top + settings.windowMargin)
+                .padding(.bottom, safeAreaInsets.bottom + settings.windowMargin)
+            } else {
+                // Full screen stays true edge-to-edge with no card at all.
+                windowContent(showsChrome: showsChrome)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    @ViewBuilder
+    private func windowContent(showsChrome: Bool) -> some View {
         HStack(spacing: 0) {
             if sidebarShouldShow && showsChrome {
-                // Top/bottom padding here must match the web content column's
-                // own top/bottom padding below exactly, or the two panels'
-                // edges don't line up — that's what made the sidebar look
-                // "floating" out of alignment with the page next to it. Both
-                // now use the same `max(inset, safeArea)` formula per edge
-                // (previously this used `.padding(.vertical:)` with a
-                // halved top safe-area inset, which matched neither edge).
-                // Flush to the leading/top/bottom edges — only the true safe
-                // area (notch, home indicator, rounded display corners) ever
-                // adds a gap here now. `settings.sidebarVerticalInset`
-                // remains available as an explicit user-controlled "shrink
-                // the sidebar" slider, but it's no longer treated as an
-                // artificial minimum margin when it's 0.
-                // Bottom is no longer padded by the safe area at all — only
-                // the user's own "Sidebar Height Margin" slider adds space
-                // there now, so at its default of 0 the sidebar runs flush
-                // to the physical bottom edge, matching the reference layout.
                 SidebarView()
-                    .padding(.leading, safeAreaInsets.leading)
-                    .padding(.top, safeAreaInsets.top + settings.sidebarVerticalInset)
-                    .padding(.bottom, settings.sidebarVerticalInset)
                     .frame(maxHeight: .infinity)
                     .transition(.move(edge: .leading).combined(with: .opacity))
 
@@ -174,47 +200,30 @@ struct ContentView: View {
                 webContentArea
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(.leading, !showsChrome ? 0 : (sidebarShouldShow ? 0 : safeAreaInsets.leading))
-            .padding(.trailing, !showsChrome ? 0 : safeAreaInsets.trailing)
-            .padding(.top, !showsChrome ? 0 : safeAreaInsets.top)
-            .padding(.bottom, !showsChrome ? 0 : settings.sidebarVerticalInset)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     @ViewBuilder
     private var webContentArea: some View {
-        // Full-bleed on every edge that's actually flush against the screen
-        // border — rounding those just clips into empty space. The only
-        // corner that rounds is the one facing the sidebar (when it's
-        // showing), and it's driven by the exact same
-        // `settings.sidebarCornerRadius` value the sidebar itself uses for
-        // its facing corner, so the seam between the two always matches and
-        // the corner-radius slider visibly moves both sides.
-        let showsChrome = !browser.isFullScreenActive
-        let facingRadius: CGFloat = (showsChrome && sidebarShouldShow) ? settings.sidebarCornerRadius : 0
-
+        // The merged window's own `GlassPanel` (see `mainLayout`) already
+        // clips sidebar + content + divider together into one rounded
+        // shape, so nothing in here needs its own corner radius or
+        // background/border/shadow anymore — panes are just plain content.
         if let splitTabID = browser.splitTabID, let splitTab = browser.tab(withID: splitTabID), let primaryTab = browser.currentTab {
-            // Split View: primary pane keeps the sidebar-facing rounded
-            // corner; the split pane's outer (trailing) edge is square since
-            // it's flush with the physical screen edge; the shared seam in
-            // the middle stays square on both sides, same reasoning as the
-            // sidebar/content seam.
             GeometryReader { geo in
                 let dividerWidth: CGFloat = 6
                 let usable = geo.size.width - dividerWidth
                 let leadingWidth = max(200, usable * browser.splitDividerFraction)
 
                 HStack(spacing: 0) {
-                    pane(for: primaryTab, controller: browser.currentController,
-                         radii: RectangleCornerRadii(topLeading: facingRadius, bottomLeading: facingRadius, bottomTrailing: 0, topTrailing: 0))
+                    pane(for: primaryTab, controller: browser.currentController)
                         .frame(width: leadingWidth)
 
                     SplitDividerHandle(usableWidth: usable, fraction: $browser.splitDividerFraction)
                         .frame(width: dividerWidth)
 
-                    pane(for: splitTab, controller: browser.webControllers[splitTabID],
-                         radii: RectangleCornerRadii(topLeading: 0, bottomLeading: 0, bottomTrailing: 0, topTrailing: 0))
+                    pane(for: splitTab, controller: browser.webControllers[splitTabID])
                         .frame(maxWidth: .infinity)
                         .overlay(alignment: .topTrailing) {
                             Button { browser.closeSplit() } label: {
@@ -230,23 +239,18 @@ struct ContentView: View {
                 }
             }
         } else {
-            let radii = RectangleCornerRadii(topLeading: facingRadius, bottomLeading: facingRadius, bottomTrailing: 0, topTrailing: 0)
-            pane(for: browser.currentTab, controller: browser.currentController, radii: radii)
+            pane(for: browser.currentTab, controller: browser.currentController)
         }
     }
 
-    /// Renders one tab's content (Start page, loading web view, or error
-    /// page) clipped and backed to the given corner radii. Shared by both
-    /// the normal single-pane layout and each side of Split View.
+    /// Renders one tab's content: Start page, loading web view, or error
+    /// page. Shared by both the normal single-pane layout and each side of
+    /// Split View.
     @ViewBuilder
-    private func pane(for tab: BrowserTab?, controller: WebViewController?, radii: RectangleCornerRadii) -> some View {
-        let shape = UnevenRoundedRectangle(cornerRadii: radii, style: .continuous)
-
+    private func pane(for tab: BrowserTab?, controller: WebViewController?) -> some View {
         if let tab {
             if tab.urlString == "trident://start" {
                 StartPageView()
-                    .clipShape(shape)
-                    .background(GlassPanel(cornerRadii: radii, tintOpacity: 0.35) { Color.clear })
             } else if let controller {
                 ZStack {
                     BrowserWebView(controller: controller)
@@ -263,7 +267,6 @@ struct ContentView: View {
                         .padding(.top, 2)
                     }
                 }
-                .clipShape(shape)
             } else {
                 ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
             }
@@ -318,15 +321,16 @@ private struct SidebarResizeHandle: View {
         // (usually much taller) sidebar, so most of the edge wasn't
         // draggable at all. This version makes the *entire* height of the
         // sidebar edge grabbable — the capsule is still what's drawn, but the
-        // hit area behind it spans top to bottom. Its width is now driven by
-        // `settings.sidebarContentGap`, so the visible gap between the
-        // sidebar and the page is user-adjustable instead of a fixed value.
+        // hit area behind it spans top to bottom. Sidebar and content now
+        // share one card with no gap between them, so this is just a thin
+        // in-card divider/grip rather than a strip that shows background
+        // through it.
         ZStack {
             Capsule()
                 .fill(Color.white.opacity(isDragging ? 0.3 : 0.14))
                 .frame(width: 3, height: 44)
         }
-        .frame(width: max(5, settings.sidebarContentGap))
+        .frame(width: 10)
         .frame(maxHeight: .infinity)
         .contentShape(Rectangle())
         .gesture(
