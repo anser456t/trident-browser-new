@@ -155,6 +155,16 @@ struct AppearanceSettingsView: View {
                 Text("Softens the whole background — this is what shows behind the sidebar and around the web page card in the floating window layout, regardless of which style is selected above.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+
+                Divider().padding(.vertical, 4)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Content Card Blur").foregroundStyle(.secondary)
+                    Slider(value: $settings.contentCardBlur, in: 0...40)
+                }
+                Text("Controls the frosted-glass look of the floating web page card itself — independent of the sidebar's own blur (Settings ▸ Sidebar ▸ Blur Amount).")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             AppearancePreview()

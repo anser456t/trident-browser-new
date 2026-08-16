@@ -6,17 +6,17 @@ struct SidebarSettingsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
             settingsGroup("Content Card") {
-                Text("The web page floats as its own card with a drop shadow. The sidebar has no card of its own — it sits directly on the background (see Appearance ▸ Background Blur).")
+                Text("The web page floats as its own card with a drop shadow, and now has its own independent blur control (see Appearance ▸ Content Card Blur). Corner radius and transparency below are shared with the sidebar so the two surfaces match.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 sliderRow("Window Margin", value: $settings.windowMargin, range: 0...48, unit: "pt")
                 sliderRow("Corner Radius", value: $settings.sidebarCornerRadius, range: 0...28, unit: "pt")
                 sliderRow("Transparency", value: $settings.sidebarTransparency, range: 0.2...0.9, unit: "%", isPercent: true)
-                sliderRow("Blur Amount", value: $settings.sidebarBlur, range: 0...40, unit: "pt")
             }
 
             settingsGroup("Sidebar") {
                 sliderRow("Sidebar Width", value: $settings.sidebarWidth, range: 260...400, unit: "pt")
+                sliderRow("Blur Amount", value: $settings.sidebarBlur, range: 0...40, unit: "pt")
             }
 
             settingsGroup("Display") {

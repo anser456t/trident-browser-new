@@ -138,6 +138,10 @@ final class AppSettings: ObservableObject {
     @Published var sidebarWidth: Double { didSet { save(sidebarWidth, "sidebarWidth") } }
     @Published var sidebarTransparency: Double { didSet { save(sidebarTransparency, "sidebarTransparency") } }
     @Published var sidebarBlur: Double { didSet { save(sidebarBlur, "sidebarBlur") } }
+    /// Blur for the floating web content card (Settings ▸ Appearance ▸
+    /// Content Card Blur) — independent of `sidebarBlur`, which now only
+    /// affects the sidebar itself.
+    @Published var contentCardBlur: Double { didSet { save(contentCardBlur, "contentCardBlur") } }
     @Published var sidebarCornerRadius: Double { didSet { save(sidebarCornerRadius, "sidebarCornerRadius") } }
     @Published var sidebarCompactMode: Bool { didSet { save(sidebarCompactMode, "sidebarCompactMode") } }
     @Published var sidebarShowFavicons: Bool { didSet { save(sidebarShowFavicons, "sidebarShowFavicons") } }
@@ -213,6 +217,7 @@ final class AppSettings: ObservableObject {
         sidebarWidth = d.object(forKey: "sidebarWidth") as? Double ?? 310
         sidebarTransparency = d.object(forKey: "sidebarTransparency") as? Double ?? 0.6
         sidebarBlur = d.object(forKey: "sidebarBlur") as? Double ?? 20
+        contentCardBlur = d.object(forKey: "contentCardBlur") as? Double ?? 20
         sidebarCornerRadius = d.object(forKey: "sidebarCornerRadius") as? Double ?? 16
         sidebarCompactMode = d.object(forKey: "sidebarCompactMode") as? Bool ?? false
         sidebarShowFavicons = d.object(forKey: "sidebarShowFavicons") as? Bool ?? true
