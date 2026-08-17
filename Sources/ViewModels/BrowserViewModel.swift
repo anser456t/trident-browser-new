@@ -329,6 +329,10 @@ final class BrowserViewModel: ObservableObject {
         controller.onCreateNewTab = { [weak self] url in
             self?.createTab(urlString: url.absoluteString)
         }
+        controller.onOpenLinkInNewTab = { [weak self] url in
+            self?.createTab(urlString: url.absoluteString, activate: false)
+            self?.showToast("Opened in new tab")
+        }
         controller.onDownloadWillStart = { [weak self] in
             self?.showToast("Download started")
         }

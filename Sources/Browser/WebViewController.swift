@@ -32,6 +32,12 @@ final class WebViewController: NSObject, ObservableObject, Identifiable {
     private var isObservingAudioKVO = false
 
     var onCreateNewTab: ((URL) -> Void)?
+    /// Called when the user picks "Open in New Tab" from a long-pressed link
+    /// — unlike `onCreateNewTab` (used for `window.open`/target=_blank, which
+    /// switches to the new tab immediately since the site expects that),
+    /// this opens the tab in the background so the user stays on the page
+    /// they long-pressed from, matching Safari/Arc's long-press-link behavior.
+    var onOpenLinkInNewTab: ((URL) -> Void)?
     /// Called the moment a download is handed off to WKDownload, so the UI can show a toast.
     var onDownloadWillStart: (() -> Void)?
 
@@ -280,6 +286,31 @@ extension WebViewController: WKUIDelegate {
 
     func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
         completionHandler()
+    }
+
+    // Long-press on a link inside the page — shows "Open in New Tab" /
+    // "Copy Link" / "Share" in the native context menu, same as Safari.
+    func webView(_ webView: WKWebView, contextMenuConfigurationForElement elementInfo: WKContextMenuElementInfo, completionHandler: @escaping (UIContextMenuConfiguration?) -> Void) {
+        guard let url = elementInfo.linkURL else {
+            completionHandler(nil)
+            return
+        }
+        let config = UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
+            let openInNewTab = UIAction(title: "Open in New Tab", image: UIImage(systemName: "plus.square.on.square")) { _ in
+                self?.onOpenLinkInNewTab?(url)
+            }
+            let copyLink = UIAction(title: "Copy Link", image: UIImage(systemName: "doc.on.doc")) { _ in
+                UIPasteboard.general.url = url
+            }
+            let share = UIAction(title: "Share", image: UIImage(systemName: "square.and.arrow.up")) { _ in
+                guard let scene = webView.window?.windowScene,
+                      let root = scene.windows.first(where: { $0.isKeyWindow })?.rootViewController else { return }
+                let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+                root.present(activityVC, animated: true)
+            }
+            return UIMenu(title: url.absoluteString, children: [openInNewTab, copyLink, share])
+        }
+        completionHandler(config)
     }
 }
 
