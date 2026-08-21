@@ -109,6 +109,12 @@ final class AppSettings: ObservableObject {
     @Published var homeBackgroundColorHex: String { didSet { save(homeBackgroundColorHex, "homeBackgroundColorHex") } }
     @Published var homeBackgroundOpacity: Double { didSet { save(homeBackgroundOpacity, "homeBackgroundOpacity") } }
     @Published var homeBackgroundBlur: Double { didSet { save(homeBackgroundBlur, "homeBackgroundBlur") } }
+    /// Size and placement controls for the Start page widget row.
+    @Published var homeWebpageHeight: Double { didSet { save(homeWebpageHeight, "homeWebpageHeight") } }
+    @Published var homeWidgetsLeading: Double { didSet { save(homeWidgetsLeading, "homeWidgetsLeading") } }
+    @Published var homeWidgetsTrailing: Double { didSet { save(homeWidgetsTrailing, "homeWidgetsTrailing") } }
+    @Published var homeWidgetsTop: Double { didSet { save(homeWidgetsTop, "homeWidgetsTop") } }
+    @Published var homeWidgetsBottom: Double { didSet { save(homeWidgetsBottom, "homeWidgetsBottom") } }
 
     // Appearance
     @Published var colorSchemePreference: ColorSchemePreference { didSet { save(colorSchemePreference.rawValue, "colorSchemePreference") } }
@@ -143,6 +149,9 @@ final class AppSettings: ObservableObject {
     @Published var sidebarShowFavicons: Bool { didSet { save(sidebarShowFavicons, "sidebarShowFavicons") } }
     @Published var sidebarAlwaysShow: Bool { didSet { save(sidebarAlwaysShow, "sidebarAlwaysShow") } }
     @Published var sidebarAutoHide: Bool { didSet { save(sidebarAutoHide, "sidebarAutoHide") } }
+    /// Width of the webpage card as a fraction of the available content area.
+    /// The sidebar itself remains at its normal width.
+    @Published var webpageWidth: Double { didSet { save(webpageWidth, "webpageWidth") } }
     /// When entering true full-screen (immersive) mode: if true, the status
     /// bar (clock/battery/wifi) is hidden outright; if false, a solid bar is
     /// drawn behind it so the web page can't show through underneath it.
@@ -194,6 +203,11 @@ final class AppSettings: ObservableObject {
         homeBackgroundColorHex = d.string(forKey: "homeBackgroundColorHex") ?? AccentPreset.lavender.hex
         homeBackgroundOpacity = d.object(forKey: "homeBackgroundOpacity") as? Double ?? 0.0
         homeBackgroundBlur = d.object(forKey: "homeBackgroundBlur") as? Double ?? 0
+        homeWebpageHeight = d.object(forKey: "homeWebpageHeight") as? Double ?? 1.0
+        homeWidgetsLeading = d.object(forKey: "homeWidgetsLeading") as? Double ?? 0
+        homeWidgetsTrailing = d.object(forKey: "homeWidgetsTrailing") as? Double ?? 0
+        homeWidgetsTop = d.object(forKey: "homeWidgetsTop") as? Double ?? 0
+        homeWidgetsBottom = d.object(forKey: "homeWidgetsBottom") as? Double ?? 0
 
         colorSchemePreference = ColorSchemePreference(rawValue: d.string(forKey: "colorSchemePreference") ?? "") ?? .dark
         accentColorHex = d.string(forKey: "accentColorHex") ?? AccentPreset.lavender.hex
@@ -218,6 +232,7 @@ final class AppSettings: ObservableObject {
         sidebarShowFavicons = d.object(forKey: "sidebarShowFavicons") as? Bool ?? true
         sidebarAlwaysShow = d.object(forKey: "sidebarAlwaysShow") as? Bool ?? true
         sidebarAutoHide = d.object(forKey: "sidebarAutoHide") as? Bool ?? false
+        webpageWidth = d.object(forKey: "webpageWidth") as? Double ?? 1.0
         hideStatusBarInFullScreen = d.object(forKey: "hideStatusBarInFullScreen") as? Bool ?? false
         windowMargin = d.object(forKey: "windowMargin") as? Double ?? 14
 

@@ -13,6 +13,17 @@ struct HomeScreenSettingsView: View {
                         Text(style.displayName).tag(style)
                     }
                 }
+                sliderRow("Webpage Height", value: $settings.homeWebpageHeight, range: 0.65...1.0, unit: "%", isPercent: true)
+            }
+
+            settingsGroup("Widget Position") {
+                Text("Adjust the Start page widget row inside the webpage surface.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                sliderRow("Left", value: $settings.homeWidgetsLeading, range: 0...80, unit: "pt")
+                sliderRow("Right", value: $settings.homeWidgetsTrailing, range: 0...80, unit: "pt")
+                sliderRow("Top", value: $settings.homeWidgetsTop, range: 0...80, unit: "pt")
+                sliderRow("Bottom", value: $settings.homeWidgetsBottom, range: 0...80, unit: "pt")
             }
 
             settingsGroup("Card Appearance") {
@@ -66,6 +77,19 @@ struct HomeScreenSettingsView: View {
             VStack(alignment: .leading, spacing: 14) {
                 content()
             }
+        }
+    }
+
+    private func sliderRow(_ label: String, value: Binding<Double>, range: ClosedRange<Double>, unit: String, isPercent: Bool = false) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(label).foregroundStyle(.secondary)
+                Spacer()
+                Text(isPercent ? "\(Int(value.wrappedValue * 100))\(unit)" : "\(Int(value.wrappedValue))\(unit)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Slider(value: value, in: range)
         }
     }
 }

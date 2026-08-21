@@ -30,6 +30,10 @@ struct StartPageView: View {
 
                     HomeWidgetsRow()
                         .frame(maxWidth: 900)
+                    .padding(.leading, settings.homeWidgetsLeading)
+                    .padding(.trailing, settings.homeWidgetsTrailing)
+                    .padding(.top, settings.homeWidgetsTop)
+                    .padding(.bottom, settings.homeWidgetsBottom)
 
                     if settings.startPageStyle == .dashboard {
                         Group {

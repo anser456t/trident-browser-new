@@ -10,6 +10,13 @@ assets are used anywhere in this project).
 
 A round of fixes and new features on top of the initial build:
 
+- **Added**: webpage-only sizing controls. Sidebar Width is no longer exposed
+  as the page-size slider; Webpage Width changes only the content card, while
+  Home Screen now includes Webpage Height plus independent widget
+  left/right/top/bottom offsets.
+- **Fixed**: hidden-sidebar browsing is now edge-to-edge on every tab,
+  including the Start page, without the outer margin that made the tab bar
+  and webpage look inset.
 - **Fixed**: removed the extra bottom window margin from the full-width
   webpage layout when the sidebar is hidden, eliminating the thin empty strip
   beneath pages in landscape.

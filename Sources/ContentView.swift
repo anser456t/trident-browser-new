@@ -153,25 +153,42 @@ struct ContentView: View {
                 // background + border + shadow + rounded corners) — that's
                 // the one piece meant to look like a window sitting above
                 // the backdrop, drop shadow included.
-                HStack(spacing: 0) {
-                    if sidebarShouldShow {
-                        SidebarView()
-                            .frame(maxHeight: .infinity)
-                            .transition(.move(edge: .leading).combined(with: .opacity))
+                GeometryReader { layout in
+                    HStack(spacing: 0) {
+                        if sidebarShouldShow {
+                            SidebarView()
+                                .frame(maxHeight: .infinity)
+                                .transition(.move(edge: .leading).combined(with: .opacity))
 
-                        SidebarResizeHandle()
+                            SidebarResizeHandle()
+                        }
+
+                        // These controls resize only the webpage surface.
+                        // When the sidebar is hidden, the page always stays
+                        // full-width and full-height.
+                        let pageWidth = sidebarShouldShow
+                            ? max(320, layout.size.width * settings.webpageWidth)
+                            : layout.size.width
+                        let pageHeight = sidebarShouldShow && isHomeTab
+                            ? max(320, layout.size.height * settings.homeWebpageHeight)
+                            : layout.size.height
+
+                        contentColumn(showsChrome: true, roundCorners: sidebarShouldShow)
+                            .frame(width: pageWidth, height: pageHeight, alignment: .top)
+                            .frame(maxHeight: .infinity, alignment: .top)
                     }
-
-                    contentColumn(showsChrome: true, roundCorners: sidebarShouldShow)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 }
                 // With the sidebar hidden, the webpage is the primary
                 // surface and should run all the way to the bottom edge.
-                // Keeping the normal window margin here leaves a small,
-                // distracting strip beneath WKWebView in landscape.
-                .padding(.leading, safeAreaInsets.leading + settings.windowMargin)
-                .padding(.trailing, safeAreaInsets.trailing + settings.windowMargin)
-                .padding(.top, safeAreaInsets.top + settings.windowMargin)
-                .padding(.bottom, safeAreaInsets.bottom + (sidebarShouldShow ? settings.windowMargin : 0))
+                // Do not re-add even the reported bottom safe-area inset:
+                // iPad landscape can report a small inset here although the
+                // browser window is already drawing below it, which leaves a
+                // visible strip beneath WKWebView.
+                .padding(.leading, sidebarShouldShow ? safeAreaInsets.leading + settings.windowMargin : safeAreaInsets.leading)
+                .padding(.trailing, sidebarShouldShow ? safeAreaInsets.trailing + settings.windowMargin : safeAreaInsets.trailing)
+                .padding(.top, sidebarShouldShow ? safeAreaInsets.top + settings.windowMargin : safeAreaInsets.top)
+                .padding(.bottom, sidebarShouldShow ? safeAreaInsets.bottom + settings.windowMargin : 0)
             } else {
                 // Full screen: no sidebar, no card, true edge-to-edge.
                 contentColumn(showsChrome: false, roundCorners: false)
