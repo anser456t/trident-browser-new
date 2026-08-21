@@ -10,6 +10,12 @@ assets are used anywhere in this project).
 
 A round of fixes and new features on top of the initial build:
 
+- **Fixed**: removed the extra bottom window margin from the full-width
+  webpage layout when the sidebar is hidden, eliminating the thin empty strip
+  beneath pages in landscape.
+- **Added**: an "Open in Safari" handoff in both navigation bars for secure
+  pages. This provides a reliable passkey fallback for sites whose WebAuthn
+  flow cannot authorize a custom WKWebView browser app (including Gmail).
 - **Added**: fixed back, forward, and reload/stop controls to the compact tab
   bar, so core navigation stays available when the sidebar is hidden. The
   controls remain visible while the tab chips scroll horizontally and reflect

@@ -184,6 +184,14 @@ struct CompactTabStripView: View {
                     browser.reload()
                 }
             }
+
+            compactToolbarButton(
+                systemName: "safari",
+                label: "Open in Safari",
+                isEnabled: browser.currentController?.currentURLString.hasPrefix("https://") == true
+            ) {
+                browser.openCurrentPageInSafari()
+            }
         }
         .padding(.horizontal, 6)
         .padding(.vertical, 6)

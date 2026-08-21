@@ -2,6 +2,7 @@ import Foundation
 import SwiftData
 import SwiftUI
 import Combine
+import UIKit
 
 @MainActor
 final class BrowserViewModel: ObservableObject {
@@ -397,6 +398,19 @@ final class BrowserViewModel: ObservableObject {
     func goForward() { currentController?.goForward() }
     func reload() { currentController?.reload() }
     func stop() { currentController?.stop() }
+
+    /// Passkeys on arbitrary third-party sites may require the system browser's
+    /// WebAuthn authorization path. Hand the current HTTPS page to Safari so
+    /// Face ID, Touch ID, or the device passcode can complete the challenge.
+    func openCurrentPageInSafari() {
+        guard let urlString = currentController?.currentURLString,
+              let url = URL(string: urlString),
+              url.scheme?.lowercased() == "https" else {
+            showToast("Safari handoff is available for secure web pages")
+            return
+        }
+        UIApplication.shared.open(url)
+    }
 
     // MARK: - Spaces
 

@@ -41,6 +41,9 @@ struct SidebarView: View {
                         UIPasteboard.general.string = browser.currentTab?.urlString
                         browser.showToast("Link copied")
                     }
+                    toolbarIconButton("safari") {
+                        browser.openCurrentPageInSafari()
+                    }
 
                     Spacer()
 

@@ -163,10 +163,15 @@ struct ContentView: View {
                     }
 
                     contentColumn(showsChrome: true, roundCorners: sidebarShouldShow)
-                }                .padding(.leading, safeAreaInsets.leading + settings.windowMargin)
+                }
+                // With the sidebar hidden, the webpage is the primary
+                // surface and should run all the way to the bottom edge.
+                // Keeping the normal window margin here leaves a small,
+                // distracting strip beneath WKWebView in landscape.
+                .padding(.leading, safeAreaInsets.leading + settings.windowMargin)
                 .padding(.trailing, safeAreaInsets.trailing + settings.windowMargin)
                 .padding(.top, safeAreaInsets.top + settings.windowMargin)
-                .padding(.bottom, safeAreaInsets.bottom + settings.windowMargin)
+                .padding(.bottom, safeAreaInsets.bottom + (sidebarShouldShow ? settings.windowMargin : 0))
             } else {
                 // Full screen: no sidebar, no card, true edge-to-edge.
                 contentColumn(showsChrome: false, roundCorners: false)
