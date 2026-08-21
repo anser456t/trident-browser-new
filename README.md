@@ -10,6 +10,16 @@ assets are used anywhere in this project).
 
 A round of fixes and new features on top of the initial build:
 
+- **Added**: fixed back, forward, and reload/stop controls to the compact tab
+  bar, so core navigation stays available when the sidebar is hidden. The
+  controls remain visible while the tab chips scroll horizontally and reflect
+  the active tab's loading/history state.
+- **Polished**: the Start page now adapts its dashboard cards and spacing to
+  narrow iPad windows and portrait split-screen instead of forcing two cards
+  into a cramped row.
+- **Polished**: the Start page search field now trims blank submissions,
+  disables unwanted autocorrection/capitalization for URLs, supports a clear
+  button, and dismisses the keyboard after navigation.
 - **Fixed**: back/forward buttons doing nothing — the SwiftUI↔WKWebView bridge
   wasn't swapping the displayed page on tab switch (`BrowserWebView` now keys
   off `controller.id` so each tab reliably shows its own web view).

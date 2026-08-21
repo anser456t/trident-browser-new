@@ -49,6 +49,7 @@ struct CompactTabStripView: View {
                     if showsSidebarToggle {
                         sidebarToggleChip
                     }
+                    navigationControls
                     tabStrip
                 }
             }
@@ -145,6 +146,66 @@ struct CompactTabStripView: View {
             .padding(.vertical, 6)
         }
         .background(GlassPanel(cornerRadius: 12) { Color.clear })
+    }
+
+    /// Navigation stays fixed while the tab chips scroll horizontally. This
+    /// keeps the most-used browser controls available when the sidebar is
+    /// hidden, without stealing room from the tab titles.
+    private var navigationControls: some View {
+        HStack(spacing: 2) {
+            compactToolbarButton(
+                systemName: "chevron.left",
+                label: "Back",
+                isEnabled: browser.currentController?.canGoBack == true
+            ) {
+                browser.goBack()
+            }
+
+            compactToolbarButton(
+                systemName: "chevron.right",
+                label: "Forward",
+                isEnabled: browser.currentController?.canGoForward == true
+            ) {
+                browser.goForward()
+            }
+
+            compactToolbarButton(
+                systemName: browser.currentController?.isLoading == true
+                    ? "xmark"
+                    : "arrow.clockwise",
+                label: browser.currentController?.isLoading == true
+                    ? "Stop loading"
+                    : "Reload page",
+                isEnabled: true
+            ) {
+                if browser.currentController?.isLoading == true {
+                    browser.stop()
+                } else {
+                    browser.reload()
+                }
+            }
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 6)
+        .background(GlassPanel(cornerRadius: 12) { Color.clear })
+    }
+
+    private func compactToolbarButton(
+        systemName: String,
+        label: String,
+        isEnabled: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.white.opacity(isEnabled ? 0.72 : 0.22))
+                .frame(width: 25, height: 26)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!isEnabled)
+        .accessibilityLabel(label)
     }
 
     private var sidebarToggleChip: some View {

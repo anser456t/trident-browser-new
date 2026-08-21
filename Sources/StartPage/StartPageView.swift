@@ -8,40 +8,52 @@ struct StartPageView: View {
     @Query(sort: \BookmarkItem.sortOrder) private var bookmarks: [BookmarkItem]
     @State private var quickSearchText = ""
     @State private var showingAddQuickAccess = false
+    @FocusState private var searchIsFocused: Bool
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 24) {
                 // Order matches the layout Anser laid out by hand: greeting,
                 // then search, then Quick Access, then the weather/screen
                 // time/clock row.
                 HomeGreetingHeader()
                     .frame(maxWidth: 900)
 
-                searchField
-                    .frame(maxWidth: 560)
+                    searchField
+                        .frame(maxWidth: 560)
 
-                if settings.startPageStyle != .minimal {
-                    quickAccessRow
-                        .frame(maxWidth: 900)
-                }
-
-                HomeWidgetsRow()
-                    .frame(maxWidth: 900)
-
-                if settings.startPageStyle == .dashboard {
-                    HStack(alignment: .top, spacing: 20) {
-                        recentTabsCard
-                        pinnedCard
+                    if settings.startPageStyle != .minimal {
+                        quickAccessRow
+                            .frame(maxWidth: 900)
                     }
-                    .frame(maxWidth: 900)
-                }
 
-                Spacer(minLength: 40)
+                    HomeWidgetsRow()
+                        .frame(maxWidth: 900)
+
+                    if settings.startPageStyle == .dashboard {
+                        Group {
+                            if geometry.size.width < 680 {
+                                VStack(spacing: 14) {
+                                    recentTabsCard
+                                    pinnedCard
+                                }
+                            } else {
+                                HStack(alignment: .top, spacing: 20) {
+                                    recentTabsCard
+                                    pinnedCard
+                                }
+                            }
+                        }
+                        .frame(maxWidth: 900)
+                    }
+
+                    Spacer(minLength: 40)
+                }
+                .padding(.horizontal, geometry.size.width < 520 ? 16 : 32)
+                .padding(.top, geometry.size.height < 700 ? 16 : 28)
+                .frame(maxWidth: .infinity)
             }
-            .padding(.horizontal, 32)
-            .padding(.top, 28)
-            .frame(maxWidth: .infinity)
         }
         .background(homeBackgroundLayer)
         .sheet(isPresented: $showingAddQuickAccess) {
@@ -93,8 +105,27 @@ struct StartPageView: View {
             Image(systemName: "magnifyingglass").foregroundStyle(.white.opacity(0.5))
             TextField("Search the web...", text: $quickSearchText)
                 .foregroundStyle(.white)
-                .onSubmit { browser.navigate(to: quickSearchText) }
+                .focused($searchIsFocused)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .onSubmit {
+                    let query = quickSearchText.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard !query.isEmpty else { return }
+                    browser.navigate(to: query)
+                    searchIsFocused = false
+                }
                 .submitLabel(.go)
+            if !quickSearchText.isEmpty {
+                Button {
+                    quickSearchText = ""
+                    searchIsFocused = true
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.white.opacity(0.38))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Clear search")
+            }
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 14)
