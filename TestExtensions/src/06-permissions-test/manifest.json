@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Permissions Test",
+  "version": "1.0",
+  "description": "Only runs on example.com to verify host permission enforcement.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://*.example.com/*"],
+  "content_scripts": [
+    { "matches": ["https://*.example.com/*"], "js": ["content.js"], "run_at": "document_idle" }
+  ]
+}
