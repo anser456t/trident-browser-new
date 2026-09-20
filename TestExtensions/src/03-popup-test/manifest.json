@@ -1,0 +1,8 @@
+{
+  "manifest_version": 3,
+  "name": "Popup Test",
+  "version": "1.0",
+  "description": "Contains a popup.html.",
+  "permissions": [],
+  "action": { "default_popup": "popup.html", "default_title": "Popup Test" }
+}
