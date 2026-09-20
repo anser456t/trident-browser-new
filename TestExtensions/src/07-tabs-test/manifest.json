@@ -1,0 +1,8 @@
+{
+  "manifest_version": 3,
+  "name": "Tabs Test",
+  "version": "1.0",
+  "description": "Tests basic chrome.tabs functionality.",
+  "permissions": ["tabs"],
+  "action": { "default_popup": "popup.html", "default_title": "Tabs Test" }
+}
